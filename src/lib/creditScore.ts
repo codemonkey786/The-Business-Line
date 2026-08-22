@@ -265,6 +265,23 @@ export function computeCreditScore(
     convictionMixFactor(state.calls),
   ];
 
+  // A brand new (or freshly reset) account has never made a call yet — start at a flat,
+  // neutral 600 rather than whatever the factor baselines happen to compute to, so every
+  // person's score genuinely begins in the same place.
+  if (state.calls.length === 0) {
+    const marketVolatility = computeMarketVolatility(quotes);
+    return {
+      score: 600,
+      band: bandForScore(600),
+      factors,
+      avgEdgePct: 0,
+      openCalls: 0,
+      winRate: null,
+      marketVolatility,
+      volatilityScalar: volatilityScalarFor(marketVolatility),
+    };
+  }
+
   const weighted = factors.reduce((sum, f) => sum + f.value * f.weight, 0);
 
   const allEdges = state.calls.map((c) => callEdgePct(c, quotes));

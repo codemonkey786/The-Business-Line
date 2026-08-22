@@ -20,10 +20,10 @@ export function useProfiles(symbols: string[]) {
     async function loadMissing() {
       const list = symbolsKey.split(",").filter((s) => !profilesRef.current[s]);
       if (list.length === 0) return;
-      const result = await fetchProfiles(list);
-      if (!cancelled && Object.keys(result).length > 0) {
-        setProfiles((prev) => ({ ...prev, ...result }));
-      }
+      await fetchProfiles(list, (batch) => {
+        if (cancelled) return;
+        setProfiles((prev) => ({ ...prev, ...batch }));
+      });
     }
 
     loadMissing();

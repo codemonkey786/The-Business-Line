@@ -51,27 +51,33 @@ export function useQuotes(symbols: string[]) {
     async function poll() {
       try {
         const list = symbolsKey.split(",");
-        const result = await fetchQuotes(list);
-        if (cancelled) return;
-        setQuotes((prev) => ({ ...prev, ...result }));
-        const now = Date.now();
-        setHistory((prev) => {
-          const next = { ...prev };
-          for (const [symbol, q] of Object.entries(result)) {
-            next[symbol] = pruneHistoryPoint(next[symbol] ?? [], { t: now, price: q.price });
-          }
-          schedulePersist(next);
-          return next;
+        // Paint each batch in as it lands rather than waiting for the whole watchlist to
+        // finish — with 20+ symbols staggered to respect the free-tier rate limit, waiting
+        // for the full set left the first symbols sitting on a skeleton for several seconds
+        // even though their own request had already come back.
+        await fetchQuotes(list, (batch) => {
+          if (cancelled) return;
+          setQuotes((prev) => ({ ...prev, ...batch }));
+          const now = Date.now();
+          setHistory((prev) => {
+            const next = { ...prev };
+            for (const [symbol, q] of Object.entries(batch)) {
+              next[symbol] = pruneHistoryPoint(next[symbol] ?? [], { t: now, price: q.price });
+            }
+            schedulePersist(next);
+            return next;
+          });
+          setDailyHistory((prev) => {
+            const next = { ...prev };
+            for (const [symbol, q] of Object.entries(batch)) {
+              next[symbol] = upsertDailyPoint(next[symbol] ?? [], { t: now, price: q.price });
+            }
+            schedulePersistDaily(next);
+            return next;
+          });
+          setLoading(false);
         });
-        setDailyHistory((prev) => {
-          const next = { ...prev };
-          for (const [symbol, q] of Object.entries(result)) {
-            next[symbol] = upsertDailyPoint(next[symbol] ?? [], { t: now, price: q.price });
-          }
-          schedulePersistDaily(next);
-          return next;
-        });
-        setError(null);
+        if (!cancelled) setError(null);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Failed to fetch quotes");
       } finally {

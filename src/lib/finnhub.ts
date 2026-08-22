@@ -64,13 +64,15 @@ export async function fetchQuote(symbol: string): Promise<Quote> {
   };
 }
 
-const QUOTE_BATCH_SIZE = 5;
-const QUOTE_BATCH_DELAY_MS = 400;
+const QUOTE_BATCH_SIZE = 8;
+const QUOTE_BATCH_DELAY_MS = 250;
 
 // Firing every symbol at once (a full watchlist + categories can be 20-30 of them) is exactly
 // what triggers the free-tier 429 storm — small staggered batches keep every symbol actually
 // loading instead of some getting throttled out and stuck blank until the next poll.
-export async function fetchQuotes(symbols: string[]): Promise<Record<string, Quote>> {
+// onBatch, when given, fires after each batch lands so the caller can paint symbols in as they
+// arrive instead of waiting for the whole watchlist to finish before anything shows up.
+export async function fetchQuotes(symbols: string[], onBatch?: (partial: Record<string, Quote>) => void): Promise<Record<string, Quote>> {
   const result: Record<string, Quote> = {};
   for (let i = 0; i < symbols.length; i += QUOTE_BATCH_SIZE) {
     const batch = symbols.slice(i, i + QUOTE_BATCH_SIZE);
@@ -83,9 +85,14 @@ export async function fetchQuotes(symbols: string[]): Promise<Record<string, Quo
         }
       })
     );
+    const batchResult: Record<string, Quote> = {};
     for (const e of entries) {
-      if (e) result[e[0]] = e[1];
+      if (e) {
+        result[e[0]] = e[1];
+        batchResult[e[0]] = e[1];
+      }
     }
+    if (Object.keys(batchResult).length > 0) onBatch?.(batchResult);
     if (i + QUOTE_BATCH_SIZE < symbols.length) await sleep(QUOTE_BATCH_DELAY_MS);
   }
   return result;
@@ -111,12 +118,16 @@ export async function fetchProfile(symbol: string): Promise<CompanyProfile | nul
   };
 }
 
-const PROFILE_BATCH_SIZE = 5;
-const PROFILE_BATCH_DELAY_MS = 400;
+const PROFILE_BATCH_SIZE = 8;
+const PROFILE_BATCH_DELAY_MS = 250;
 
 // Same staggered-batch treatment as fetchQuotes — firing every symbol's profile request at
-// once is what starves logos out under the free-tier rate limit in the first place.
-export async function fetchProfiles(symbols: string[]): Promise<Record<string, CompanyProfile>> {
+// once is what starves logos out under the free-tier rate limit in the first place. Same
+// progressive onBatch callback too, so logos fill in per-batch instead of all at once at the end.
+export async function fetchProfiles(
+  symbols: string[],
+  onBatch?: (partial: Record<string, CompanyProfile>) => void
+): Promise<Record<string, CompanyProfile>> {
   const result: Record<string, CompanyProfile> = {};
   for (let i = 0; i < symbols.length; i += PROFILE_BATCH_SIZE) {
     const batch = symbols.slice(i, i + PROFILE_BATCH_SIZE);
@@ -129,9 +140,14 @@ export async function fetchProfiles(symbols: string[]): Promise<Record<string, C
         }
       })
     );
+    const batchResult: Record<string, CompanyProfile> = {};
     for (const e of entries) {
-      if (e && e[1]) result[e[0]] = e[1];
+      if (e && e[1]) {
+        result[e[0]] = e[1];
+        batchResult[e[0]] = e[1];
+      }
     }
+    if (Object.keys(batchResult).length > 0) onBatch?.(batchResult);
     if (i + PROFILE_BATCH_SIZE < symbols.length) await sleep(PROFILE_BATCH_DELAY_MS);
   }
   return result;

@@ -27,12 +27,13 @@ import { useArticleFeedback } from "./store/useArticleFeedback";
 import { mergeDailyAndIntradayScoreHistory } from "./lib/scoreHistoryStorage";
 import { computeCreditScore, scoreImpactForCall, bandColorVar } from "./lib/creditScore";
 import { hasApiKey } from "./lib/finnhub";
+import { hasSupabaseConfig } from "./lib/supabase";
 import { mergeFullAndLiveHistory } from "./lib/fullHistoryStorage";
 import { CATEGORY_LIBRARY, DEFAULT_CATEGORY_KEYS, symbolsForCategories } from "./lib/categories";
 import type { CallDirection } from "./lib/types";
 
 export default function App() {
-  const { user, signIn, signUp, signInWithGoogle, signOut, updateDisplayName } = useAuth();
+  const { user, loading: authLoading, signIn, signUp, signInWithGoogle, signOut, updateDisplayName } = useAuth();
   const displayName = (user?.user_metadata as { display_name?: string } | undefined)?.display_name;
   const { state, pick, closeCall, setScoreImpact, toggleWatchlist, syncStatus } = usePortfolio(user?.id);
   const activeCategoryKeys = DEFAULT_CATEGORY_KEYS;
@@ -146,6 +147,24 @@ export default function App() {
   }
 
   const activeCall = selectedSymbol ? state.calls.find((c) => c.symbol === selectedSymbol && !c.closedAt) : undefined;
+
+  // Every person tracks their own real credit score, so there's no anonymous/guest mode —
+  // sign-in is required before the app itself renders, not just optional "sync" later.
+  if (hasSupabaseConfig() && authLoading) {
+    return <div className="h-screen bg-black" />;
+  }
+
+  if (hasSupabaseConfig() && !user) {
+    return (
+      <AuthModal
+        required
+        onSignIn={signIn}
+        onSignUp={signUp}
+        onSignInWithGoogle={signInWithGoogle}
+        onClose={() => {}}
+      />
+    );
+  }
 
   return (
     <div className="h-screen flex overflow-hidden">

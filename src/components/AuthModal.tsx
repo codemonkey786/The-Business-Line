@@ -7,6 +7,9 @@ interface Props {
   onSignUp: (email: string, password: string) => Promise<void>;
   onSignInWithGoogle: () => Promise<void>;
   onClose: () => void;
+  // When true, this gates the whole app — no X button, no backdrop-click dismiss, since
+  // there's no "skip" option: you have to actually sign in to get anywhere.
+  required?: boolean;
 }
 
 function GoogleIcon() {
@@ -32,7 +35,7 @@ function GoogleIcon() {
   );
 }
 
-export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose }: Props) {
+export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose, required }: Props) {
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -97,7 +100,10 @@ export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose }: P
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+      onClick={required ? undefined : onClose}
+    >
       <div className="board w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
@@ -106,10 +112,17 @@ export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose }: P
             </div>
             <p className="font-semibold text-[15px]">{mode === "signIn" ? "Sign In" : "Create Account"}</p>
           </div>
-          <button onClick={onClose} className="text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors">
-            <X size={18} />
-          </button>
+          {!required && (
+            <button onClick={onClose} className="text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors">
+              <X size={18} />
+            </button>
+          )}
         </div>
+        {required && (
+          <p className="text-xs text-[var(--color-ink-faint)] -mt-2 mb-4">
+            Sign in to start tracking your own credit score — everyone starts at 600.
+          </p>
+        )}
 
         {confirmSent ? (
           <p className="text-sm text-[var(--color-ink-dim)] leading-relaxed">
