@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+/*
+  DIRECTION CONTRACT — CreditFolio, redesign pass (Impeccable)
+  THESIS: a trading dashboard should feel like a professional data terminal,
+  not a soft consumer app — density and precision read as credibility.
+  OWN-WORLD: true black CRT ground, amber phosphor accent + hairline amber
+  borders, monospace everywhere data/labels appear, zero blur, zero
+  gradients, zero rounded corners, zero drop shadow. Flat, dense, exact.
+  STORY: this is a live market terminal wearing a credit-score readout in
+  place of a P&L ticker — the seriousness of the chrome sells the joke.
+  FIRST VIEWPORT: command-bar nav, gauge readout panel styled like a
+  terminal quote page, odds/quote-style watchlist grid at right.
+  FORM: Bloomberg-terminal-inspired data density, chosen over sportsbook
+  odds board / credit-report letterhead / refined-dark, direct user pick.
+  FINISH: unreviewed and undocumented is unfinished — this build ends with a
+  self-run inspection pass (screenshots at desktop width, one fix round).
+*/
+
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+  --color-bg: #000000;
+  --color-surface: #0a0a0a;
+  --color-surface-2: #111111;
+  --color-border: rgba(255, 255, 255, 0.14);
+  --color-border-soft: rgba(255, 255, 255, 0.09);
+
+  --color-ink: #ffffff;
+  --color-ink-dim: #9a9a95;
+  --color-ink-faint: #5c5c58;
+
+  --color-amber: #ffb03e;
+  --color-amber-dim: rgba(255, 176, 62, 0.12);
+
+  --color-score-bum: #e5484d;
+  --color-score-benchwarmer: #ea7a2b;
+  --color-score-starter: #eec13a;
+  --color-score-allstar: #b9d443;
+  --color-score-hof: #4fb85c;
+  --color-score-goat: #1fd18a;
+
+  --color-up: #00c805;
+  --color-down: #ff5000;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100svh;
+  }
+
+  #root {
+    min-height: 100svh;
+  }
+
+  ::selection {
+    background: var(--color-amber);
+    color: #1a0f00;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 176, 62, 0.25);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 176, 62, 0.4);
+  }
+
+  input,
+  button {
+    font-family: inherit;
+  }
+
+  :focus-visible {
+    outline: none;
+  }
+}
+
+@layer components {
+  .board {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-soft);
+    border-radius: 16px;
+  }
+
+  .ticker-pill {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--color-ink-dim);
+    background: var(--color-surface-2);
+    border-radius: 6px;
+    padding: 2px 7px;
+  }
+
+  .term-label {
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #ffffff;
+  }
+
+  .display-bold {
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+
+  .mono-num {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .live-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    animation: live-blink 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes live-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.08) 37%, rgba(255, 255, 255, 0.03) 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.news-ticker-track {
+  width: max-content;
+  animation: news-ticker-scroll 90s linear infinite;
+}
+
+.news-ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes news-ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
