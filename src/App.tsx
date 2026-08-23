@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
-import { TopNav, type NavTab } from "./components/TopNav";
+import { TopNav, MobileTabBar, type NavTab } from "./components/TopNav";
 import { ApiKeyNotice } from "./components/ApiKeyNotice";
 import { ScoreHero } from "./components/ScoreHero";
 import { WatchlistPanel } from "./components/WatchlistPanel";
@@ -252,7 +252,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="h-[calc(100vh-56px-env(safe-area-inset-bottom))] md:h-screen flex flex-col md:flex-row overflow-hidden">
       <div className="flex-1 flex flex-col min-h-0">
         <TopNav
           activeTab={activeTab}
@@ -263,7 +263,7 @@ export default function App() {
         />
         {!hasApiKey() && <ApiKeyNotice />}
 
-        <main className="flex-1 overflow-y-auto px-6 py-6">
+        <main className="flex-1 overflow-y-auto px-4 md:px-6 py-6">
           {readingArticle ? (
             <ArticleReader
               article={readingArticle}
@@ -370,17 +370,17 @@ export default function App() {
         <button
           onClick={() => setSidebarCollapsed((v) => !v)}
           title={sidebarCollapsed ? "Expand watchlist" : "Collapse watchlist"}
-          className="absolute top-1/2 -translate-y-1/2 -left-3 z-10 w-6 h-12 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] hover:bg-white/[0.08] transition-colors"
+          className="hidden md:flex absolute top-1/2 -translate-y-1/2 -left-3 z-10 w-6 h-12 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] items-center justify-center text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] hover:bg-white/[0.08] transition-colors"
         >
           {sidebarCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
         </button>
 
         <aside
-          className={`shrink-0 overflow-hidden border-l border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col min-h-0 transition-[width] duration-200 ${
-            sidebarCollapsed ? "w-0" : "w-[340px]"
+          className={`w-full shrink-0 overflow-y-auto md:overflow-hidden border-t md:border-t-0 md:border-l border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col min-h-0 h-[50vh] md:h-auto transition-[width] duration-200 ${
+            sidebarCollapsed ? "md:w-0" : "md:w-[340px]"
           }`}
         >
-          <div className="w-[340px] flex-1 min-h-[140px] flex flex-col" data-tour="watchlist">
+          <div className="w-full md:w-[340px] flex-1 min-h-[140px] flex flex-col" data-tour="watchlist">
             <WatchlistPanel
               watchlist={state.watchlist}
               quotes={quotes}
@@ -392,7 +392,7 @@ export default function App() {
             />
           </div>
           {selectedSymbol && (
-            <div className="w-[340px] shrink-0">
+            <div className="w-full md:w-[340px] shrink-0">
               <SymbolDetailCard
                 symbol={selectedSymbol}
                 companyName={profiles[selectedSymbol]?.name}
@@ -410,6 +410,8 @@ export default function App() {
           )}
         </aside>
       </div>
+
+      <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {profileOpen && (
         <ProfileModal

@@ -75,7 +75,7 @@ export function StockSearch({ onSelect, compact = false }: { onSelect: (symbol: 
       </div>
 
       {open && (
-        <div className="absolute mt-1.5 w-full min-w-[280px] board overflow-hidden z-30 shadow-[0_12px_28px_-8px_rgba(0,0,0,0.7)]">
+        <div className="absolute mt-1.5 w-full min-w-[240px] sm:min-w-[280px] max-w-[calc(100vw-2rem)] board overflow-hidden z-30 shadow-[0_12px_28px_-8px_rgba(0,0,0,0.7)]">
           {browsing && (
             <div className="flex border-b border-[var(--color-border-soft)]">
               {TABS.map((key) => (

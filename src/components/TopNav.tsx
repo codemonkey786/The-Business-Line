@@ -1,4 +1,4 @@
-import { User } from "lucide-react";
+import { Home, History as HistoryIcon, Trophy, User } from "lucide-react";
 import { StockSearch } from "./StockSearch";
 
 export type NavTab = "overview" | "history" | "leaderboard" | "profile";
@@ -11,11 +11,11 @@ interface Props {
   scoreColor: string;
 }
 
-const NAV_LINKS: { label: string; tab: NavTab }[] = [
-  { label: "Overview", tab: "overview" },
-  { label: "History", tab: "history" },
-  { label: "Leaderboard", tab: "leaderboard" },
-  { label: "Profile", tab: "profile" },
+const NAV_LINKS: { label: string; tab: NavTab; icon: typeof Home }[] = [
+  { label: "Overview", tab: "overview", icon: Home },
+  { label: "History", tab: "history", icon: HistoryIcon },
+  { label: "Leaderboard", tab: "leaderboard", icon: Trophy },
+  { label: "Profile", tab: "profile", icon: User },
 ];
 
 export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, scoreColor }: Props) {
@@ -44,7 +44,7 @@ export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, 
         <StockSearch onSelect={onSelectSymbol} compact />
       </div>
 
-      <nav data-tour="tabs" className="hidden lg:flex items-center gap-1 text-sm font-medium text-[var(--color-ink-dim)]">
+      <nav data-tour="tabs" className="hidden md:flex items-center gap-1 text-sm font-medium text-[var(--color-ink-dim)]">
         {NAV_LINKS.map((link) => (
           <button
             key={link.tab}
@@ -68,5 +68,34 @@ export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, 
         <User size={15} />
       </button>
     </header>
+  );
+}
+
+// The desktop nav links live in the header (hidden md:flex above) and simply disappear below
+// that breakpoint — this is the mobile stand-in so History/Leaderboard/Profile stay reachable
+// on a phone instead of only being accessible via the Overview tab.
+export function MobileTabBar({ activeTab, onTabChange }: { activeTab: NavTab; onTabChange: (tab: NavTab) => void }) {
+  return (
+    <nav
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch border-t border-[var(--color-border)] bg-[var(--color-surface)]"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      {NAV_LINKS.map((link) => {
+        const Icon = link.icon;
+        const active = activeTab === link.tab;
+        return (
+          <button
+            key={link.tab}
+            onClick={() => onTabChange(link.tab)}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
+              active ? "text-[var(--color-amber)]" : "text-[var(--color-ink-faint)]"
+            }`}
+          >
+            <Icon size={18} />
+            {link.label}
+          </button>
+        );
+      })}
+    </nav>
   );
 }

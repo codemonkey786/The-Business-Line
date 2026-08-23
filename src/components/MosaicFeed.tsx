@@ -290,8 +290,8 @@ export function MosaicFeed({
 
       <div className="p-5">
         {hero && (
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-2">
               {hero.kind === "article" ? (
                 <ArticleHeroTile
                   article={hero.article}
@@ -337,7 +337,7 @@ export function MosaicFeed({
         )}
 
         {(compactStocks.length > 0 || compactItems.length > 0) && (
-          <div className="grid grid-cols-4 gap-4 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
             {compactStocks.map((s) => (
               <StockCompactTile
                 key={s}
@@ -367,7 +367,7 @@ export function MosaicFeed({
         )}
 
         {(tailStocks.length > 0 || tailItems.length > 0) && (
-          <div className="grid grid-cols-2 gap-x-6 mt-4 border-t border-[var(--color-border-soft)] pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 mt-4 border-t border-[var(--color-border-soft)] pt-2">
             <div className="flex flex-col">
               {tailStocks.map((s) => (
                 <StockRow
@@ -438,7 +438,7 @@ export function MosaicFeed({
         )}
 
         {(gainers.length > 0 || losers.length > 0) && (
-          <div className="grid grid-cols-2 gap-x-8 mt-4 border-t border-[var(--color-border-soft)] pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 mt-4 border-t border-[var(--color-border-soft)] pt-4">
             <div>
               <p className="term-label text-[11px] text-[var(--color-up)] tracking-widest mb-1.5">Top Gainers</p>
               <div className="flex flex-col">

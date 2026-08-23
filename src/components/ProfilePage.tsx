@@ -91,7 +91,7 @@ function PostRow({
         )}
         <button
           onClick={onDelete}
-          className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-down)] hover:brightness-125 transition-all px-3 py-1.5 rounded-full bg-[var(--color-down)]/10"
+          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-[var(--color-ink-faint)] hover:text-[var(--color-down)] hover:bg-[var(--color-down)]/10 transition-colors"
         >
           <Trash2 size={12} />
           Delete
