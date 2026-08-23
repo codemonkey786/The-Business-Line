@@ -43,8 +43,12 @@ export function pruneHistoryPoint(existing: PricePoint[], next: PricePoint): Pri
 
 // ---- Daily rollup (one real point per calendar day, grows slowly and honestly over time) ----
 
+// Local calendar day, not UTC — a UTC-day boundary lands mid-afternoon for US timezones
+// (e.g. ~5pm PT), which would split a single real trading day's data across two "days" or
+// roll the day over while the market's still open. Zero-padded so it stays lexically sortable.
 function dayKey(t: number): string {
-  return new Date(t).toISOString().slice(0, 10);
+  const d = new Date(t);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export function loadDailyHistory(): Record<string, PricePoint[]> {
