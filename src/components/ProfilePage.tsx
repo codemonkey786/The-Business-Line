@@ -1,8 +1,12 @@
-import { Check, Clock, Newspaper, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Check, Clock, Newspaper, Pencil, Trash2, X } from "lucide-react";
 import type { ScoreBand } from "../lib/creditScore";
-import type { Post, Quote } from "../lib/types";
+import { bandColorVar } from "../lib/creditScore";
+import type { CompanyProfile, Post, PortfolioState, PricePoint, Quote } from "../lib/types";
 import type { ScorePoint } from "../lib/scoreHistoryStorage";
 import { ScoreHero } from "./ScoreHero";
+import { PositionsTable } from "./PositionsTable";
+import { ScoreStatsPanel } from "./ScoreStatsPanel";
 
 function timeAgo(ms: number): string {
   const diffMs = Date.now() - ms;
@@ -13,6 +17,93 @@ function timeAgo(ms: number): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+// Your public byline — used as the "authorName" on any article you publish (instead of your
+// raw account email) and as your name on the leaderboard. Surfaced here front-and-center
+// rather than buried in the profile popup, since this is where publishing itself happens.
+function DisplayNameEditor({
+  displayName,
+  userEmail,
+  onUpdateDisplayName,
+}: {
+  displayName?: string;
+  userEmail?: string;
+  onUpdateDisplayName: (name: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(displayName ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    const trimmed = draft.trim();
+    if (!trimmed || saving) return;
+    setSaving(true);
+    try {
+      await onUpdateDisplayName(trimmed);
+      setEditing(false);
+    } catch {
+      // no separate error surface here — the field just stays open so they can retry
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="board mt-4 p-5">
+      <p className="term-label text-[11px] text-[var(--color-ink-faint)] tracking-widest mb-1">Display Name</p>
+      {editing ? (
+        <div className="flex items-center gap-1.5 mt-2">
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") save();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            placeholder="Your name"
+            maxLength={40}
+            className="flex-1 min-w-0 text-sm font-medium bg-white/[0.06] rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-[var(--color-amber)]"
+          />
+          <button
+            onClick={save}
+            disabled={saving || !draft.trim()}
+            title="Save"
+            className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-[var(--color-amber)] text-black disabled:opacity-50"
+          >
+            <Check size={15} />
+          </button>
+          <button
+            onClick={() => setEditing(false)}
+            title="Cancel"
+            className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-white/[0.06] text-[var(--color-ink-dim)]"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between gap-2 mt-1.5">
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold truncate">{displayName || userEmail || "Unnamed"}</p>
+            <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">
+              {displayName ? "Shown on articles you publish and the leaderboard, instead of your email." : "Set a name to publish articles under it instead of your email."}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setDraft(displayName ?? "");
+              setEditing(true);
+            }}
+            title="Edit display name"
+            className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] hover:bg-white/[0.06] transition-colors"
+          >
+            <Pencil size={15} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function PostRow({
@@ -52,7 +143,7 @@ function PostRow({
         <div className="min-w-0">
           <p className="text-sm font-bold leading-snug truncate">{post.headline}</p>
           <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[var(--color-ink-faint)] flex-wrap">
-            <span className="font-bold text-[var(--color-amber)]">The Business Line</span>
+            <span className="font-bold text-[var(--color-amber)]">{post.authorName}</span>
             <span>·</span>
             <span>{timeAgo(post.createdAt)}</span>
             {post.status === "pending" && (
@@ -113,6 +204,16 @@ interface Props {
   onDeletePost: (id: string) => Promise<void>;
   onApprovePost: (id: string) => Promise<void>;
   onOpenPost: (post: Post) => void;
+  displayName?: string;
+  userEmail?: string;
+  onUpdateDisplayName?: (name: string) => Promise<void>;
+  portfolio: PortfolioState;
+  profiles: Record<string, CompanyProfile>;
+  betas: Record<string, number>;
+  winRate: number | null;
+  priceHistory: Record<string, PricePoint[]>;
+  scoreProgressHistory: ScorePoint[];
+  scoreProgressDailyHistory: ScorePoint[];
 }
 
 export function ProfilePage({
@@ -127,6 +228,16 @@ export function ProfilePage({
   onDeletePost,
   onApprovePost,
   onOpenPost,
+  displayName,
+  userEmail,
+  onUpdateDisplayName,
+  portfolio,
+  profiles,
+  betas,
+  winRate,
+  priceHistory,
+  scoreProgressHistory,
+  scoreProgressDailyHistory,
 }: Props) {
   const myPosts = posts.filter((p) => p.authorId === userId);
   const pendingReview = posts.filter((p) => p.status === "pending" && p.authorId !== userId);
@@ -134,6 +245,14 @@ export function ProfilePage({
   return (
     <div>
       <ScoreHero score={score} band={band} delta={delta} scoreHistory={scoreHistory} />
+
+      {onUpdateDisplayName && (
+        <DisplayNameEditor displayName={displayName} userEmail={userEmail} onUpdateDisplayName={onUpdateDisplayName} />
+      )}
+
+      <PositionsTable state={portfolio} quotes={quotes} profiles={profiles} betas={betas} winRate={winRate} status="open" history={priceHistory} />
+      <PositionsTable state={portfolio} quotes={quotes} profiles={profiles} betas={betas} winRate={winRate} status="closed" />
+      <ScoreStatsPanel history={scoreProgressHistory} dailyHistory={scoreProgressDailyHistory} bandColor={bandColorVar(band)} />
 
       {isAdmin ? (
         <>

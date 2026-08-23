@@ -38,8 +38,6 @@ import type { CallDirection, NewsArticle, Post } from "./lib/types";
 
 // Split out of the main bundle: none of these are needed to paint the default Overview tab, so
 // there's no reason to make every visitor download and parse them before first render.
-const PositionsTable = lazy(() => import("./components/PositionsTable").then((m) => ({ default: m.PositionsTable })));
-const ScoreStatsPanel = lazy(() => import("./components/ScoreStatsPanel").then((m) => ({ default: m.ScoreStatsPanel })));
 const LeaderboardPanel = lazy(() => import("./components/LeaderboardPanel").then((m) => ({ default: m.LeaderboardPanel })));
 const ProfilePage = lazy(() => import("./components/ProfilePage").then((m) => ({ default: m.ProfilePage })));
 const PostComposer = lazy(() => import("./components/PostComposer").then((m) => ({ default: m.PostComposer })));
@@ -325,12 +323,6 @@ export default function App() {
                 </Suspense>
               )}
             </>
-          ) : activeTab === "history" ? (
-            <Suspense fallback={TAB_FALLBACK}>
-              <PositionsTable state={state} quotes={quotes} profiles={profiles} betas={betas} winRate={scoreResult.winRate} status="open" history={history} />
-              <PositionsTable state={state} quotes={quotes} profiles={profiles} betas={betas} winRate={scoreResult.winRate} status="closed" />
-              <ScoreStatsPanel history={scoreHistory} dailyHistory={dailyScoreHistory} bandColor={bandColorVar(scoreResult.band)} />
-            </Suspense>
           ) : activeTab === "leaderboard" ? (
             <Suspense fallback={TAB_FALLBACK}>
               <LeaderboardPanel
@@ -360,6 +352,16 @@ export default function App() {
                 onDeletePost={deletePost}
                 onApprovePost={approvePost}
                 onOpenPost={setReadingPost}
+                displayName={displayName}
+                userEmail={user?.email}
+                onUpdateDisplayName={user ? updateDisplayName : undefined}
+                portfolio={state}
+                profiles={profiles}
+                betas={betas}
+                winRate={scoreResult.winRate}
+                priceHistory={history}
+                scoreProgressHistory={scoreHistory}
+                scoreProgressDailyHistory={dailyScoreHistory}
               />
             </Suspense>
           )}

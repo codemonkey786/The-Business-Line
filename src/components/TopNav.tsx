@@ -1,7 +1,7 @@
-import { Home, History as HistoryIcon, Trophy, User } from "lucide-react";
+import { Home, Trophy, User } from "lucide-react";
 import { StockSearch } from "./StockSearch";
 
-export type NavTab = "overview" | "history" | "leaderboard" | "profile";
+export type NavTab = "overview" | "leaderboard" | "profile";
 
 interface Props {
   activeTab: NavTab;
@@ -13,7 +13,6 @@ interface Props {
 
 const NAV_LINKS: { label: string; tab: NavTab; icon: typeof Home }[] = [
   { label: "Overview", tab: "overview", icon: Home },
-  { label: "History", tab: "history", icon: HistoryIcon },
   { label: "Leaderboard", tab: "leaderboard", icon: Trophy },
   { label: "Profile", tab: "profile", icon: User },
 ];

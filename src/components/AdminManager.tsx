@@ -1,4 +1,5 @@
-import { Shield, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Search, Shield, X } from "lucide-react";
 import type { Profile } from "../lib/types";
 import { OWNER_USER_ID } from "../lib/admin";
 
@@ -10,6 +11,14 @@ interface Props {
 }
 
 export function AdminManager({ profiles, loading, onSetAdmin, onClose }: Props) {
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return profiles;
+    return profiles.filter((p) => p.email.toLowerCase().includes(q));
+  }, [profiles, query]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" onClick={onClose}>
       <div className="board w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
@@ -29,13 +38,27 @@ export function AdminManager({ profiles, loading, onSetAdmin, onClose }: Props) 
           Admins can post articles that show up in everyone's feed. Only people who've signed in at least once show up here.
         </p>
 
+        {!loading && profiles.length > 0 && (
+          <div className="flex items-center gap-2 bg-[var(--color-surface-2)] border border-[var(--color-border-soft)] rounded-full px-3.5 py-2 mb-3">
+            <Search size={14} className="text-[var(--color-ink-faint)] shrink-0" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by email…"
+              className="bg-transparent outline-none text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] w-full"
+            />
+          </div>
+        )}
+
         {loading ? (
           <p className="text-sm text-[var(--color-ink-faint)] py-4 text-center">Loading…</p>
         ) : profiles.length === 0 ? (
           <p className="text-sm text-[var(--color-ink-faint)] py-4 text-center">Nobody else has signed in yet.</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-[var(--color-ink-faint)] py-4 text-center">No one matches "{query}".</p>
         ) : (
           <div className="flex flex-col max-h-80 overflow-y-auto -mx-1">
-            {profiles.map((p) => {
+            {filtered.map((p) => {
               const isOwner = p.userId === OWNER_USER_ID;
               return (
                 <div key={p.userId} className="flex items-center justify-between gap-3 px-1 py-2.5 border-b border-[var(--color-border-soft)] last:border-0">
