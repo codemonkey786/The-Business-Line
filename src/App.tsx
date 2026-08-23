@@ -212,6 +212,15 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.calls, quotes, betas]);
 
+  // The logo and every nav tab route through this — clicking either while an article/post is
+  // open needs to actually leave the reader, not just flip activeTab underneath it (the reader
+  // views take priority over activeTab in the render below, so activeTab alone never surfaces).
+  function handleTabChange(tab: NavTab) {
+    setReadingArticle(null);
+    setReadingPost(null);
+    setActiveTab(tab);
+  }
+
   function openArticle(article: NewsArticle) {
     requireAuth(() => setReadingArticle(article));
   }
@@ -241,7 +250,7 @@ export default function App() {
       <div className="flex-1 flex flex-col min-h-0">
         <TopNav
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onSelectSymbol={handleAddSymbol}
           onOpenProfile={() => setProfileOpen(true)}
           scoreColor={bandColorVar(scoreResult.band)}
