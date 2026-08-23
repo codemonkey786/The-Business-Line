@@ -93,6 +93,8 @@ function SourceLogo({ source }: { source: string }) {
       <img
         src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
         alt={source}
+        loading="lazy"
+        decoding="async"
         onError={() => setFailed(true)}
         className="w-8 h-8 rounded-lg object-contain bg-white p-1.5 shrink-0"
       />

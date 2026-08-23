@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
 import { TopNav, type NavTab } from "./components/TopNav";
 import { ApiKeyNotice } from "./components/ApiKeyNotice";
 import { ScoreHero } from "./components/ScoreHero";
-import { PositionsTable } from "./components/PositionsTable";
-import { ScoreStatsPanel } from "./components/ScoreStatsPanel";
 import { WatchlistPanel } from "./components/WatchlistPanel";
 import { SymbolDetailCard } from "./components/SymbolDetailCard";
 import { NewsTicker } from "./components/NewsTicker";
 import { MosaicFeed } from "./components/MosaicFeed";
-import { LeaderboardPanel } from "./components/LeaderboardPanel";
 import { ProfileModal } from "./components/ProfileModal";
-import { ProfilePage } from "./components/ProfilePage";
 import { AuthModal } from "./components/AuthModal";
-import { ProductTour, type TourStep } from "./components/ProductTour";
+import type { TourStep } from "./components/ProductTour";
 import { usePortfolio } from "./store/usePortfolio";
 import { useQuotes } from "./store/useQuotes";
 import { useProfiles } from "./store/useProfiles";
@@ -29,8 +25,6 @@ import { useArticleFeedback } from "./store/useArticleFeedback";
 import { useAdmin } from "./store/useAdmin";
 import { useAdminManagement } from "./store/useAdminManagement";
 import { usePosts } from "./store/usePosts";
-import { PostComposer } from "./components/PostComposer";
-import { AdminManager } from "./components/AdminManager";
 import { ArticleReader } from "./components/ArticleReader";
 import { PostReader } from "./components/PostReader";
 import { mergeDailyAndIntradayScoreHistory } from "./lib/scoreHistoryStorage";
@@ -41,6 +35,18 @@ import { mergeFullAndLiveHistory } from "./lib/fullHistoryStorage";
 import { CATEGORY_LIBRARY, DEFAULT_CATEGORY_KEYS, symbolsForCategories } from "./lib/categories";
 import { filterNewsByStaffActivity } from "./lib/newsFiltering";
 import type { CallDirection, NewsArticle, Post } from "./lib/types";
+
+// Split out of the main bundle: none of these are needed to paint the default Overview tab, so
+// there's no reason to make every visitor download and parse them before first render.
+const PositionsTable = lazy(() => import("./components/PositionsTable").then((m) => ({ default: m.PositionsTable })));
+const ScoreStatsPanel = lazy(() => import("./components/ScoreStatsPanel").then((m) => ({ default: m.ScoreStatsPanel })));
+const LeaderboardPanel = lazy(() => import("./components/LeaderboardPanel").then((m) => ({ default: m.LeaderboardPanel })));
+const ProfilePage = lazy(() => import("./components/ProfilePage").then((m) => ({ default: m.ProfilePage })));
+const PostComposer = lazy(() => import("./components/PostComposer").then((m) => ({ default: m.PostComposer })));
+const AdminManager = lazy(() => import("./components/AdminManager").then((m) => ({ default: m.AdminManager })));
+const ProductTour = lazy(() => import("./components/ProductTour").then((m) => ({ default: m.ProductTour })));
+
+const TAB_FALLBACK = <div className="text-sm text-[var(--color-ink-faint)] py-10 text-center">Loading…</div>;
 
 const TOUR_STEPS: TourStep[] = [
   { selector: "[data-tour='search']", title: "Search the market", body: "Look up any S&P 500, Nasdaq 100, or Dow 30 stock and jump straight to it." },
@@ -314,42 +320,48 @@ export default function App() {
               />
 
               {composerOpen && user?.id && (
-                <PostComposer userId={user.id} onCreate={createPost} onClose={() => setComposerOpen(false)} />
+                <Suspense fallback={null}>
+                  <PostComposer userId={user.id} onCreate={createPost} onClose={() => setComposerOpen(false)} />
+                </Suspense>
               )}
             </>
           ) : activeTab === "history" ? (
-            <>
+            <Suspense fallback={TAB_FALLBACK}>
               <PositionsTable state={state} quotes={quotes} profiles={profiles} betas={betas} winRate={scoreResult.winRate} status="open" history={history} />
               <PositionsTable state={state} quotes={quotes} profiles={profiles} betas={betas} winRate={scoreResult.winRate} status="closed" />
               <ScoreStatsPanel history={scoreHistory} dailyHistory={dailyScoreHistory} bandColor={bandColorVar(scoreResult.band)} />
-            </>
+            </Suspense>
           ) : activeTab === "leaderboard" ? (
-            <LeaderboardPanel
-              articles={marketNews}
-              readingActivity={readingActivity}
-              profiles={profiles}
-              watchlist={state.watchlist}
-              quotes={quotes}
-              score={scoreResult.score}
-              band={scoreResult.band}
-              bandColor={bandColorVar(scoreResult.band)}
-              userEmail={displayName || user?.email}
-              onViewSymbol={handleViewSymbol}
-            />
+            <Suspense fallback={TAB_FALLBACK}>
+              <LeaderboardPanel
+                articles={marketNews}
+                readingActivity={readingActivity}
+                profiles={profiles}
+                watchlist={state.watchlist}
+                quotes={quotes}
+                score={scoreResult.score}
+                band={scoreResult.band}
+                bandColor={bandColorVar(scoreResult.band)}
+                userEmail={displayName || user?.email}
+                onViewSymbol={handleViewSymbol}
+              />
+            </Suspense>
           ) : (
-            <ProfilePage
-              score={scoreResult.score}
-              band={scoreResult.band}
-              delta={scoreDelta}
-              scoreHistory={mergedScoreHistory}
-              isAdmin={isAdmin}
-              posts={posts}
-              userId={user?.id}
-              quotes={quotes}
-              onDeletePost={deletePost}
-              onApprovePost={approvePost}
-              onOpenPost={setReadingPost}
-            />
+            <Suspense fallback={TAB_FALLBACK}>
+              <ProfilePage
+                score={scoreResult.score}
+                band={scoreResult.band}
+                delta={scoreDelta}
+                scoreHistory={mergedScoreHistory}
+                isAdmin={isAdmin}
+                posts={posts}
+                userId={user?.id}
+                quotes={quotes}
+                onDeletePost={deletePost}
+                onApprovePost={approvePost}
+                onOpenPost={setReadingPost}
+              />
+            </Suspense>
           )}
         </main>
       </div>
@@ -428,15 +440,21 @@ export default function App() {
       )}
 
       {adminManagerOpen && (
-        <AdminManager
-          profiles={adminManagement.profiles}
-          loading={adminManagement.loading}
-          onSetAdmin={adminManagement.setAdmin}
-          onClose={() => setAdminManagerOpen(false)}
-        />
+        <Suspense fallback={null}>
+          <AdminManager
+            profiles={adminManagement.profiles}
+            loading={adminManagement.loading}
+            onSetAdmin={adminManagement.setAdmin}
+            onClose={() => setAdminManagerOpen(false)}
+          />
+        </Suspense>
       )}
 
-      {tourOpen && <ProductTour steps={TOUR_STEPS} onFinish={finishTour} />}
+      {tourOpen && (
+        <Suspense fallback={null}>
+          <ProductTour steps={TOUR_STEPS} onFinish={finishTour} />
+        </Suspense>
+      )}
 
       {authOpen && (
         <AuthModal

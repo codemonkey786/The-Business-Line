@@ -40,6 +40,8 @@ function PostRow({
             <img
               src={post.imageUrl}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = "none";

@@ -16,6 +16,8 @@ export function CompanyLogo({ symbol, logoUrl, size }: Props) {
       <img
         src={logoUrl}
         alt={symbol}
+        loading="lazy"
+        decoding="async"
         onError={() => setFailed(true)}
         className="object-contain bg-white shrink-0 rounded-full border border-[var(--color-border-soft)]"
         style={{ width: size, height: size, padding: size * 0.14 }}

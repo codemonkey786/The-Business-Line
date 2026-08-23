@@ -84,6 +84,8 @@ export function PostReader({ post, quote, history, onBack }: Props) {
             key={i}
             src={block.url}
             alt=""
+            loading="lazy"
+            decoding="async"
             className={
               block.align === "center"
                 ? "w-full rounded-xl my-6 max-h-96 object-cover"
