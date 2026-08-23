@@ -57,7 +57,7 @@ export function StockSearch({ onSelect, compact = false }: { onSelect: (symbol: 
   return (
     <div ref={containerRef} className="relative w-full">
       <div
-        className={`flex items-center gap-2 bg-[var(--color-surface-2)] border border-[var(--color-border-soft)] focus-within:border-[var(--color-up)] transition-colors rounded-full ${
+        className={`flex items-center gap-2 bg-[var(--color-surface-2)] border border-[var(--color-border-soft)] focus-within:border-[var(--color-amber)] transition-colors rounded-full ${
           compact ? "px-3.5 py-1.5" : "px-3.5 py-2.5"
         }`}
       >
@@ -83,7 +83,7 @@ export function StockSearch({ onSelect, compact = false }: { onSelect: (symbol: 
                   key={key}
                   onClick={() => setTab(key)}
                   className={`flex-1 text-xs font-semibold py-2.5 transition-colors ${
-                    tab === key ? "text-[var(--color-up)] bg-[var(--color-up)]/10" : "text-[var(--color-ink-faint)] hover:text-[var(--color-ink-dim)]"
+                    tab === key ? "text-[var(--color-amber)] bg-[var(--color-amber)]/10" : "text-[var(--color-ink-faint)] hover:text-[var(--color-ink-dim)]"
                   }`}
                 >
                   {INDEX_META[key].label}

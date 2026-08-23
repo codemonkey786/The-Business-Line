@@ -1,7 +1,7 @@
 import { User } from "lucide-react";
 import { StockSearch } from "./StockSearch";
 
-export type NavTab = "overview" | "history" | "leaderboard";
+export type NavTab = "overview" | "history" | "leaderboard" | "profile";
 
 interface Props {
   activeTab: NavTab;
@@ -15,6 +15,7 @@ const NAV_LINKS: { label: string; tab: NavTab }[] = [
   { label: "Overview", tab: "overview" },
   { label: "History", tab: "history" },
   { label: "Leaderboard", tab: "leaderboard" },
+  { label: "Profile", tab: "profile" },
 ];
 
 export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, scoreColor }: Props) {

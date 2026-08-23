@@ -10,6 +10,9 @@ interface Props {
   // When true, this gates the whole app — no X button, no backdrop-click dismiss, since
   // there's no "skip" option: you have to actually sign in to get anywhere.
   required?: boolean;
+  // Contextual reason shown under the title (e.g. "Create a free account to read this
+  // article"). Overrides the default required-mode copy; shows even when dismissible.
+  message?: string;
 }
 
 function GoogleIcon() {
@@ -35,7 +38,7 @@ function GoogleIcon() {
   );
 }
 
-export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose, required }: Props) {
+export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose, required, message }: Props) {
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -118,9 +121,9 @@ export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose, req
             </button>
           )}
         </div>
-        {required && (
+        {(message || required) && (
           <p className="text-xs text-[var(--color-ink-faint)] -mt-2 mb-4">
-            Sign in to start tracking your own credit score — everyone starts at 600.
+            {message || "Sign in to start tracking your own credit score — everyone starts at 600."}
           </p>
         )}
 

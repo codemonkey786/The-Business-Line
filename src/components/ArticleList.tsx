@@ -1,6 +1,5 @@
 import { ThumbsDown, ThumbsUp } from "lucide-react";
-import type { NewsArticle } from "../lib/types";
-import type { FeedbackValue } from "../lib/articleFeedbackStorage";
+import type { NewsArticle, FeedbackValue } from "../lib/types";
 
 function timeAgo(unixSeconds: number): string {
   const diffMs = Date.now() - unixSeconds * 1000;
@@ -27,39 +26,52 @@ interface FeedbackProps {
   articleId: number;
   value?: FeedbackValue;
   onSetFeedback?: (articleId: number, value: FeedbackValue) => void;
+  likeCount?: number;
+  dislikeCount?: number;
   light?: boolean;
 }
 
-// Small like/dislike control embedded in article tiles that are themselves one big <a> link —
-// stops the click from also opening the article.
-export function ArticleFeedbackButtons({ articleId, value, onSetFeedback, light }: FeedbackProps) {
+// Small like/dislike control embedded in article tiles that are themselves one big clickable
+// tile — stops the click from also opening the article. Like counts are real and shared,
+// visible to everyone including whoever liked it. Dislike counts are also real and shared, but
+// hidden from whoever did the disliking so you're not just watching your own number tick up.
+export function ArticleFeedbackButtons({ articleId, value, onSetFeedback, likeCount, dislikeCount, light }: FeedbackProps) {
   if (!onSetFeedback) return null;
   const base = "w-6 h-6 flex items-center justify-center rounded-full transition-colors shrink-0";
   const idle = light ? "bg-white/15 text-white/80 hover:bg-white/25 hover:text-white" : "bg-white/[0.06] text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]";
+  const countClass = `mono-num text-[10px] font-bold ${light ? "text-white/70" : "text-[var(--color-ink-faint)]"}`;
+  const showLikeCount = (likeCount ?? 0) > 0;
+  const showDislikeCount = value !== "dislike" && (dislikeCount ?? 0) > 0;
   return (
     <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.preventDefault()}>
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onSetFeedback(articleId, "like");
-        }}
-        title="Like"
-        className={`${base} ${value === "like" ? "bg-[var(--color-up)] text-[#04150a]" : idle}`}
-      >
-        <ThumbsUp size={12} />
-      </button>
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onSetFeedback(articleId, "dislike");
-        }}
-        title="Dislike"
-        className={`${base} ${value === "dislike" ? "bg-[var(--color-down)] text-[#1a0303]" : idle}`}
-      >
-        <ThumbsDown size={12} />
-      </button>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSetFeedback(articleId, "like");
+          }}
+          title="Like"
+          className={`${base} ${value === "like" ? "bg-[var(--color-up)] text-[#04150a]" : idle}`}
+        >
+          <ThumbsUp size={12} />
+        </button>
+        {showLikeCount && <span className={countClass}>{likeCount}</span>}
+      </div>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSetFeedback(articleId, "dislike");
+          }}
+          title="Dislike"
+          className={`${base} ${value === "dislike" ? "bg-[var(--color-down)] text-[#1a0303]" : idle}`}
+        >
+          <ThumbsDown size={12} />
+        </button>
+        {showDislikeCount && <span className={countClass}>{dislikeCount}</span>}
+      </div>
     </div>
   );
 }
@@ -68,17 +80,24 @@ export function ArticleHeroTile({
   article,
   feedback,
   onSetFeedback,
+  likeCount,
+  dislikeCount,
+  onOpen,
 }: {
   article: NewsArticle;
   feedback?: FeedbackValue;
   onSetFeedback?: (articleId: number, value: FeedbackValue) => void;
+  likeCount?: number;
+  dislikeCount?: number;
+  onOpen: (article: NewsArticle) => void;
 }) {
   return (
-    <a
-      href={article.url}
-      target="_blank"
-      rel="noreferrer"
-      className="group relative rounded-2xl overflow-hidden bg-[var(--color-surface-2)] block h-full min-h-[280px]"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(article)}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen(article)}
+      className="group relative rounded-2xl overflow-hidden bg-[var(--color-surface-2)] block w-full h-full min-h-[280px] text-left cursor-pointer"
     >
       {article.image && (
         <img
@@ -96,10 +115,17 @@ export function ArticleHeroTile({
         <p className="display-bold text-2xl leading-tight mt-1.5 text-white">{article.headline}</p>
         <div className="flex items-center justify-between gap-3 mt-3">
           <ArticleMeta article={article} className="text-white/70" />
-          <ArticleFeedbackButtons articleId={article.id} value={feedback} onSetFeedback={onSetFeedback} light />
+          <ArticleFeedbackButtons
+            articleId={article.id}
+            value={feedback}
+            onSetFeedback={onSetFeedback}
+            likeCount={likeCount}
+            dislikeCount={dislikeCount}
+            light
+          />
         </div>
       </div>
-    </a>
+    </div>
   );
 }
 
@@ -107,13 +133,25 @@ export function ArticleSideTile({
   article,
   feedback,
   onSetFeedback,
+  likeCount,
+  dislikeCount,
+  onOpen,
 }: {
   article: NewsArticle;
   feedback?: FeedbackValue;
   onSetFeedback?: (articleId: number, value: FeedbackValue) => void;
+  likeCount?: number;
+  dislikeCount?: number;
+  onOpen: (article: NewsArticle) => void;
 }) {
   return (
-    <a href={article.url} target="_blank" rel="noreferrer" className="group flex gap-3 p-3 rounded-xl hover:bg-white/[0.04] transition-colors">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(article)}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen(article)}
+      className="group flex gap-3 p-3 rounded-xl hover:bg-white/[0.04] transition-colors w-full text-left cursor-pointer"
+    >
       <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-[var(--color-surface-2)]">
         {article.image && (
           <img
@@ -130,10 +168,16 @@ export function ArticleSideTile({
         <p className="text-sm font-bold leading-snug line-clamp-3">{article.headline}</p>
         <div className="flex items-center justify-between gap-3 mt-1.5">
           <ArticleMeta article={article} />
-          <ArticleFeedbackButtons articleId={article.id} value={feedback} onSetFeedback={onSetFeedback} />
+          <ArticleFeedbackButtons
+            articleId={article.id}
+            value={feedback}
+            onSetFeedback={onSetFeedback}
+            likeCount={likeCount}
+            dislikeCount={dislikeCount}
+          />
         </div>
       </div>
-    </a>
+    </div>
   );
 }
 
@@ -141,13 +185,25 @@ export function ArticleCompactTile({
   article,
   feedback,
   onSetFeedback,
+  likeCount,
+  dislikeCount,
+  onOpen,
 }: {
   article: NewsArticle;
   feedback?: FeedbackValue;
   onSetFeedback?: (articleId: number, value: FeedbackValue) => void;
+  likeCount?: number;
+  dislikeCount?: number;
+  onOpen: (article: NewsArticle) => void;
 }) {
   return (
-    <a href={article.url} target="_blank" rel="noreferrer" className="group block rounded-xl overflow-hidden bg-[var(--color-surface-2)]">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(article)}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen(article)}
+      className="group block rounded-xl overflow-hidden bg-[var(--color-surface-2)] w-full text-left cursor-pointer"
+    >
       <div className="h-28 overflow-hidden bg-[var(--color-surface-2)]">
         {article.image && (
           <img
@@ -164,9 +220,15 @@ export function ArticleCompactTile({
         <p className="text-[13px] font-bold leading-snug line-clamp-2">{article.headline}</p>
         <div className="flex items-center justify-between gap-2 mt-1.5">
           <ArticleMeta article={article} />
-          <ArticleFeedbackButtons articleId={article.id} value={feedback} onSetFeedback={onSetFeedback} />
+          <ArticleFeedbackButtons
+            articleId={article.id}
+            value={feedback}
+            onSetFeedback={onSetFeedback}
+            likeCount={likeCount}
+            dislikeCount={dislikeCount}
+          />
         </div>
       </div>
-    </a>
+    </div>
   );
 }

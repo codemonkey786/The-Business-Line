@@ -23,6 +23,22 @@ function wedgePath(startAngle: number, endAngle: number) {
   return `M ${CX} ${CY} L ${outerStart.x} ${outerStart.y} A ${OUTER_R} ${OUTER_R} 0 0 1 ${outerEnd.x} ${outerEnd.y} Z`;
 }
 
+// The six bands are drawn as equal-width wedges, but their score ranges aren't equal
+// (Excellent is only 50 points wide vs. 100 for the rest) — so the needle has to be
+// positioned by band-slot + fraction-within-band, not a straight (score-min)/(max-min)
+// lerp across the whole 300-850 range, or it lands off the actual band boundaries.
+function scorePct(score: number) {
+  const clamped = Math.max(MIN_SCORE, Math.min(MAX_SCORE, score));
+  const n = SCORE_BANDS.length;
+  const i = Math.max(
+    0,
+    SCORE_BANDS.findIndex((b) => clamped <= b.max)
+  );
+  const b = SCORE_BANDS[i];
+  const frac = b.max > b.min ? (clamped - b.min) / (b.max - b.min) : 0;
+  return (i + Math.max(0, Math.min(1, frac))) / n;
+}
+
 const PERIODS: { label: string; ms: number }[] = [
   { label: "1D", ms: 24 * 60 * 60 * 1000 },
   { label: "1W", ms: 7 * 24 * 60 * 60 * 1000 },
@@ -39,9 +55,18 @@ interface Props {
 
 export function CreditGauge({ score, band, delta, scoreHistory = [] }: Props) {
   const percentile = percentileForScore(score);
-  const scorePct = Math.max(0, Math.min(1, (score - MIN_SCORE) / (MAX_SCORE - MIN_SCORE)));
-  const needleAngle = 180 - scorePct * 180;
+  const needleAngle = 180 - scorePct(score) * 180;
   const color = bandColor(band);
+  // A score sitting exactly on a band boundary (e.g. 600, right between Fair and
+  // Good) points the needle right at the dividing line — so both wedges it touches
+  // should glow, not just whichever one bandForScore happened to pick.
+  const activeBands = useMemo(() => {
+    const set = new Set<ScoreBand>([band]);
+    const i = SCORE_BANDS.findIndex((b) => b.band === band);
+    if (i > 0 && score === SCORE_BANDS[i].min) set.add(SCORE_BANDS[i - 1].band);
+    if (i < SCORE_BANDS.length - 1 && score === SCORE_BANDS[i].max) set.add(SCORE_BANDS[i + 1].band);
+    return set;
+  }, [band, score]);
   const { value: animatedScore, direction: scoreDirection } = useAnimatedNumber(score);
   const scoreTextColor = scoreDirection === -1 ? "var(--color-down)" : scoreDirection === 1 ? "var(--color-up)" : "#ffffff";
   const [showPeriods, setShowPeriods] = useState(false);
@@ -71,7 +96,7 @@ export function CreditGauge({ score, band, delta, scoreHistory = [] }: Props) {
           const nameY = above ? tickOuter.y - 4 - 16 : tickOuter.y + 18;
           const rangeY = above ? tickOuter.y - 4 : nameY + 14;
 
-          const isActive = band === b.band;
+          const isActive = activeBands.has(b.band);
 
           return (
             <g key={b.band}>

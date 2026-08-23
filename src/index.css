@@ -105,6 +105,12 @@
     border-radius: 16px;
   }
 
+  .post-body-editor:empty:before {
+    content: attr(data-placeholder);
+    color: var(--color-ink-faint);
+    pointer-events: none;
+  }
+
   .ticker-pill {
     font-family: var(--font-sans);
     font-weight: 600;

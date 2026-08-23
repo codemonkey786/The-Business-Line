@@ -47,7 +47,6 @@ function Row({
 
       <span className="flex items-center gap-1.5 w-[56px] shrink-0 min-w-0">
         <span className="text-[14px] font-semibold text-[var(--color-ink)] truncate">{symbol}</span>
-        <span className="w-[5px] h-[5px] rounded-full bg-[#3b82f6] shrink-0" />
       </span>
 
       <span className="text-[13.5px] mono-num text-[var(--color-ink)] flex-1 text-right truncate">

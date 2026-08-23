@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
-import { Check, Cloud, CloudOff, LogOut, Pencil, RefreshCw, User, X } from "lucide-react";
+import { Check, Cloud, CloudOff, LogOut, Pencil, RefreshCw, Shield, User, X } from "lucide-react";
 import { bandColorVar, type ScoreBand } from "../lib/creditScore";
 import type { SyncStatus } from "../store/usePortfolio";
 import type { Call } from "../lib/types";
@@ -17,6 +17,8 @@ interface Props {
   onOpenAuth: () => void;
   onClose: () => void;
   onUpdateDisplayName: (name: string) => Promise<void>;
+  isOwner?: boolean;
+  onOpenAdminManager?: () => void;
 }
 
 function StatRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
@@ -42,6 +44,8 @@ export function ProfileModal({
   onOpenAuth,
   onClose,
   onUpdateDisplayName,
+  isOwner,
+  onOpenAdminManager,
 }: Props) {
   const color = bandColorVar(band);
   const displayName = (user?.user_metadata as { display_name?: string } | undefined)?.display_name;
@@ -185,6 +189,15 @@ export function ProfileModal({
                   </div>
                 )}
               </div>
+              {isOwner && onOpenAdminManager && (
+                <button
+                  onClick={onOpenAdminManager}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-amber)]/15 text-[var(--color-amber)] hover:bg-[var(--color-amber)]/25 transition-colors mb-2"
+                >
+                  <Shield size={14} />
+                  Manage Admins
+                </button>
+              )}
               <button
                 onClick={onSignOut}
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold bg-white/[0.06] text-[var(--color-ink-dim)] hover:text-[var(--color-ink)] hover:bg-white/[0.1] transition-colors"

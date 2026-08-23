@@ -1,0 +1,107 @@
+import { ArrowLeft, Clock } from "lucide-react";
+import type { Post, PricePoint, Quote } from "../lib/types";
+import { PriceChart } from "./PriceChart";
+import { parsePostBody } from "../lib/postContent";
+
+function timeAgo(ms: number): string {
+  const diffMs = Date.now() - ms;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+interface Props {
+  post: Post;
+  quote?: Quote;
+  history: PricePoint[];
+  onBack: () => void;
+}
+
+// Staff posts are the site's own original content, so this shows the full thing natively —
+// no external link needed, unlike real third-party news. Just title, then text, on the page
+// itself rather than boxed in a card. Deleting your own post lives on the Profile page, not
+// buried in the reading view.
+export function PostReader({ post, quote, history, onBack }: Props) {
+  return (
+    <div className="max-w-2xl mx-auto">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-sm text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors mb-6"
+      >
+        <ArrowLeft size={15} />
+        Back
+      </button>
+
+      <div className="flex items-center gap-2">
+        <span className="mono-num text-[10px] font-bold text-[var(--color-amber)] uppercase tracking-wider">From The Business Line</span>
+        {post.status === "pending" && (
+          <span className="flex items-center gap-1 text-[10px] font-bold text-[var(--color-down)] uppercase tracking-wider">
+            <Clock size={10} />
+            Pending Approval — not public yet
+          </span>
+        )}
+      </div>
+      <h1 className="display-bold text-3xl leading-tight mt-1.5 mb-2">{post.headline}</h1>
+      <p className="text-xs text-[var(--color-ink-faint)] mb-6">
+        {post.authorName} · {timeAgo(post.createdAt)}
+      </p>
+
+      {post.symbol && (
+        <div className="rounded-xl bg-[var(--color-surface-2)] p-3 mb-6">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="ticker-pill">{post.symbol}</span>
+            {quote && (
+              <span
+                className={`mono-num text-xs font-bold ${(quote.percentChange ?? 0) >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}
+              >
+                {quote.price.toFixed(2)} {(quote.percentChange ?? 0) >= 0 ? "+" : ""}
+                {quote.percentChange.toFixed(2)}%
+              </span>
+            )}
+          </div>
+          <PriceChart data={history} positive={(quote?.percentChange ?? 0) >= 0} height={60} />
+        </div>
+      )}
+
+      {post.imageUrl && (
+        <img
+          src={post.imageUrl}
+          alt=""
+          className="w-full rounded-xl mb-6 max-h-96 object-cover"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+      )}
+
+      {parsePostBody(post.body).map((block, i) =>
+        block.type === "image" ? (
+          <img
+            key={i}
+            src={block.url}
+            alt=""
+            className={
+              block.align === "center"
+                ? "w-full rounded-xl my-6 max-h-96 object-cover"
+                : `max-w-[45%] max-h-72 rounded-xl mb-4 object-cover ${
+                    block.align === "left" ? "float-left mr-5" : "float-right ml-5"
+                  }`
+            }
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+        ) : (
+          <p key={i} className="text-[15px] text-[var(--color-ink-dim)] leading-relaxed whitespace-pre-wrap mb-4 last:mb-0">
+            {block.text}
+          </p>
+        )
+      )}
+      <div className="clear-both" />
+    </div>
+  );
+}

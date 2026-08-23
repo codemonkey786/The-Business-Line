@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
 import { TopNav, type NavTab } from "./components/TopNav";
 import { ApiKeyNotice } from "./components/ApiKeyNotice";
 import { ScoreHero } from "./components/ScoreHero";
@@ -11,6 +11,7 @@ import { NewsTicker } from "./components/NewsTicker";
 import { MosaicFeed } from "./components/MosaicFeed";
 import { LeaderboardPanel } from "./components/LeaderboardPanel";
 import { ProfileModal } from "./components/ProfileModal";
+import { ProfilePage } from "./components/ProfilePage";
 import { AuthModal } from "./components/AuthModal";
 import { usePortfolio } from "./store/usePortfolio";
 import { useQuotes } from "./store/useQuotes";
@@ -24,30 +25,47 @@ import { useScoreDelta } from "./store/useScoreDelta";
 import { useScoreHistory } from "./store/useScoreHistory";
 import { useReadingActivity } from "./store/useReadingActivity";
 import { useArticleFeedback } from "./store/useArticleFeedback";
+import { useAdmin } from "./store/useAdmin";
+import { useAdminManagement } from "./store/useAdminManagement";
+import { usePosts } from "./store/usePosts";
+import { PostComposer } from "./components/PostComposer";
+import { AdminManager } from "./components/AdminManager";
+import { ArticleReader } from "./components/ArticleReader";
+import { PostReader } from "./components/PostReader";
 import { mergeDailyAndIntradayScoreHistory } from "./lib/scoreHistoryStorage";
 import { computeCreditScore, scoreImpactForCall, bandColorVar } from "./lib/creditScore";
 import { hasApiKey } from "./lib/finnhub";
 import { hasSupabaseConfig } from "./lib/supabase";
 import { mergeFullAndLiveHistory } from "./lib/fullHistoryStorage";
 import { CATEGORY_LIBRARY, DEFAULT_CATEGORY_KEYS, symbolsForCategories } from "./lib/categories";
-import type { CallDirection } from "./lib/types";
+import { filterNewsByStaffActivity } from "./lib/newsFiltering";
+import type { CallDirection, NewsArticle, Post } from "./lib/types";
 
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signInWithGoogle, signOut, updateDisplayName } = useAuth();
   const displayName = (user?.user_metadata as { display_name?: string } | undefined)?.display_name;
   const { state, pick, closeCall, setScoreImpact, toggleWatchlist, syncStatus } = usePortfolio(user?.id);
+  const { isAdmin, isOwner } = useAdmin(user);
+  const { posts, createPost, deletePost, approvePost } = usePosts(user);
+  const publishedPosts = useMemo(() => posts.filter((p) => p.status === "published"), [posts]);
+  const adminManagement = useAdminManagement(isOwner);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [adminManagerOpen, setAdminManagerOpen] = useState(false);
+  const [readingArticle, setReadingArticle] = useState<NewsArticle | null>(null);
+  const [readingPost, setReadingPost] = useState<Post | null>(null);
   const activeCategoryKeys = DEFAULT_CATEGORY_KEYS;
   const activeCategories = useMemo(
     () => CATEGORY_LIBRARY.filter((c) => activeCategoryKeys.includes(c.key)),
     [activeCategoryKeys]
   );
 
+  const postSymbols = useMemo(() => posts.map((p) => p.symbol).filter((s): s is string => Boolean(s)), [posts]);
   const trackedSymbols = useMemo(
     () =>
       Array.from(
-        new Set([...state.watchlist, ...state.calls.map((c) => c.symbol), ...symbolsForCategories(activeCategoryKeys)])
+        new Set([...state.watchlist, ...state.calls.map((c) => c.symbol), ...symbolsForCategories(activeCategoryKeys), ...postSymbols])
       ),
-    [state.watchlist, state.calls, activeCategoryKeys]
+    [state.watchlist, state.calls, activeCategoryKeys, postSymbols]
   );
   const { quotes, history, dailyHistory } = useQuotes(trackedSymbols);
   const profiles = useProfiles(trackedSymbols);
@@ -78,7 +96,20 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<NavTab>("overview");
+
+  // Guests can browse the dashboard with a theoretical (default, un-personalized) credit
+  // score, but actually opening content requires an account — this is the shared gate for
+  // both of those "requires an account" actions, popped up instead of performing them.
+  function requireAuth(action: () => void) {
+    if (user) {
+      action();
+      return;
+    }
+    setAuthMessage("Create a free account to read this and follow along — everyone starts with a theoretical 600 credit score.");
+    setAuthOpen(true);
+  }
 
   // Full multi-year daily history is fetched lazily, only for whichever symbol is actually
   // open in the detail panel — the free data source behind it has a small daily request
@@ -95,15 +126,27 @@ export default function App() {
     selectedSymbol ? [{ symbol: selectedSymbol, name: profiles[selectedSymbol]?.name }] : []
   );
 
-  const { articles: marketNews } = useMarketNews();
+  const { articles: marketNewsRaw } = useMarketNews();
+  const marketNews = useMemo(
+    () => filterNewsByStaffActivity(marketNewsRaw, publishedPosts.length),
+    [marketNewsRaw, publishedPosts.length]
+  );
   const { activity: readingActivity, recordView } = useReadingActivity();
-  const { feedback: articleFeedback, setFeedback: setArticleFeedback } = useArticleFeedback();
+  const {
+    feedback: articleFeedback,
+    likeCounts: articleLikeCounts,
+    dislikeCounts: articleDislikeCounts,
+    setFeedback: setArticleFeedback,
+  } = useArticleFeedback(user);
 
   // Viewing a stock (clicking its row anywhere) just selects it into the detail panel — and
-  // counts as one real, honest "read" of that symbol for the leaderboard.
+  // counts as one real, honest "read" of that symbol for the leaderboard. Gated behind an
+  // account for guests.
   function handleViewSymbol(symbol: string) {
-    setSelectedSymbol(symbol);
-    recordView(symbol);
+    requireAuth(() => {
+      setSelectedSymbol(symbol);
+      recordView(symbol);
+    });
   }
 
   // A closed call's score contribution is frozen at the moment it closes — computed here,
@@ -141,29 +184,28 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.calls, quotes, betas]);
 
+  function openArticle(article: NewsArticle) {
+    requireAuth(() => setReadingArticle(article));
+  }
+
+  function openPost(post: Post) {
+    requireAuth(() => setReadingPost(post));
+  }
+
   function handleAddSymbol(symbol: string) {
-    if (!state.watchlist.includes(symbol)) toggleWatchlist(symbol);
-    handleViewSymbol(symbol);
+    requireAuth(() => {
+      if (!state.watchlist.includes(symbol)) toggleWatchlist(symbol);
+      handleViewSymbol(symbol);
+    });
   }
 
   const activeCall = selectedSymbol ? state.calls.find((c) => c.symbol === selectedSymbol && !c.closedAt) : undefined;
 
-  // Every person tracks their own real credit score, so there's no anonymous/guest mode —
-  // sign-in is required before the app itself renders, not just optional "sync" later.
+  // Guests can browse the dashboard itself — the score gauge, feed, and watchlist all render
+  // with a theoretical (default, un-personalized) 600 score — but opening an article/post or
+  // a stock's detail panel is gated behind an account via requireAuth() below.
   if (hasSupabaseConfig() && authLoading) {
     return <div className="h-screen bg-black" />;
-  }
-
-  if (hasSupabaseConfig() && !user) {
-    return (
-      <AuthModal
-        required
-        onSignIn={signIn}
-        onSignUp={signUp}
-        onSignInWithGoogle={signInWithGoogle}
-        onClose={() => {}}
-      />
-    );
   }
 
   return (
@@ -179,27 +221,64 @@ export default function App() {
         {!hasApiKey() && <ApiKeyNotice />}
 
         <main className="flex-1 overflow-y-auto px-6 py-6">
-          {activeTab === "overview" ? (
+          {readingArticle ? (
+            <ArticleReader
+              article={readingArticle}
+              feedback={articleFeedback?.[readingArticle.id]}
+              onSetFeedback={setArticleFeedback}
+              likeCount={articleLikeCounts?.[readingArticle.id]}
+              dislikeCount={articleDislikeCounts?.[readingArticle.id]}
+              onBack={() => setReadingArticle(null)}
+            />
+          ) : readingPost ? (
+            <PostReader
+              post={readingPost}
+              quote={readingPost.symbol ? quotes[readingPost.symbol] : undefined}
+              history={readingPost.symbol ? history[readingPost.symbol] ?? [] : []}
+              onBack={() => setReadingPost(null)}
+            />
+          ) : activeTab === "overview" ? (
             <>
               <ScoreHero score={scoreResult.score} band={scoreResult.band} delta={scoreDelta} scoreHistory={mergedScoreHistory} />
 
               <div className="flex items-center gap-3 mt-4">
                 <span className="text-[var(--color-ink-dim)] text-sm shrink-0">Markets</span>
-                <NewsTicker articles={marketNews} />
+                <NewsTicker articles={marketNews} onOpenArticle={openArticle} />
               </div>
+
+              {isAdmin && (
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={() => setComposerOpen(true)}
+                    className="flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-lg bg-[var(--color-amber)] text-black hover:brightness-110 active:scale-[0.98] transition-all"
+                  >
+                    <Newspaper size={13} />
+                    New Post
+                  </button>
+                </div>
+              )}
 
               <MosaicFeed
                 title="For You"
                 articles={marketNews}
+                posts={publishedPosts}
                 stockSymbols={mosaicStockSymbols}
                 positionSymbols={openPositionSymbols}
                 quotes={quotes}
                 profiles={profiles}
                 history={history}
                 onView={handleViewSymbol}
+                onOpenArticle={openArticle}
+                onOpenPost={openPost}
                 articleFeedback={articleFeedback}
                 onSetArticleFeedback={setArticleFeedback}
+                articleLikeCounts={articleLikeCounts}
+                articleDislikeCounts={articleDislikeCounts}
               />
+
+              {composerOpen && user?.id && (
+                <PostComposer userId={user.id} onCreate={createPost} onClose={() => setComposerOpen(false)} />
+              )}
             </>
           ) : activeTab === "history" ? (
             <>
@@ -207,7 +286,7 @@ export default function App() {
               <PositionsTable state={state} quotes={quotes} profiles={profiles} betas={betas} winRate={scoreResult.winRate} status="closed" />
               <ScoreStatsPanel history={scoreHistory} dailyHistory={dailyScoreHistory} bandColor={bandColorVar(scoreResult.band)} />
             </>
-          ) : (
+          ) : activeTab === "leaderboard" ? (
             <LeaderboardPanel
               articles={marketNews}
               readingActivity={readingActivity}
@@ -219,6 +298,20 @@ export default function App() {
               bandColor={bandColorVar(scoreResult.band)}
               userEmail={displayName || user?.email}
               onViewSymbol={handleViewSymbol}
+            />
+          ) : (
+            <ProfilePage
+              score={scoreResult.score}
+              band={scoreResult.band}
+              delta={scoreDelta}
+              scoreHistory={mergedScoreHistory}
+              isAdmin={isAdmin}
+              posts={posts}
+              userId={user?.id}
+              quotes={quotes}
+              onDeletePost={deletePost}
+              onApprovePost={approvePost}
+              onOpenPost={setReadingPost}
             />
           )}
         </main>
@@ -285,14 +378,30 @@ export default function App() {
           }}
           onOpenAuth={() => {
             setProfileOpen(false);
+            setAuthMessage(undefined);
             setAuthOpen(true);
           }}
           onClose={() => setProfileOpen(false)}
+          isOwner={isOwner}
+          onOpenAdminManager={() => {
+            setProfileOpen(false);
+            setAdminManagerOpen(true);
+          }}
+        />
+      )}
+
+      {adminManagerOpen && (
+        <AdminManager
+          profiles={adminManagement.profiles}
+          loading={adminManagement.loading}
+          onSetAdmin={adminManagement.setAdmin}
+          onClose={() => setAdminManagerOpen(false)}
         />
       )}
 
       {authOpen && (
         <AuthModal
+          message={authMessage}
           onSignIn={async (email, password) => {
             await signIn(email, password);
             setAuthOpen(false);

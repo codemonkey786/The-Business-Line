@@ -2,27 +2,26 @@ import type { NewsArticle } from "../lib/types";
 
 interface Props {
   articles: NewsArticle[];
+  onOpenArticle: (article: NewsArticle) => void;
 }
 
 // A real, continuously scrolling strip of genuine headlines — no synthetic copy, just the
 // same live market news feed used elsewhere, presented like a newsroom ticker.
-export function NewsTicker({ articles }: Props) {
+export function NewsTicker({ articles, onOpenArticle }: Props) {
   if (articles.length === 0) return null;
   const items = articles.slice(0, 15);
 
   const track = (
     <div className="flex items-center shrink-0">
       {items.map((a, i) => (
-        <a
+        <button
           key={`${a.id}-${i}`}
-          href={a.url}
-          target="_blank"
-          rel="noreferrer"
+          onClick={() => onOpenArticle(a)}
           className="flex items-center gap-2 pr-8 text-[13px] text-[var(--color-ink-dim)] hover:text-[var(--color-ink)] transition-colors whitespace-nowrap"
         >
           <span className="mono-num text-[10px] font-bold text-[var(--color-amber)] uppercase tracking-wider shrink-0">{a.source}</span>
           {a.headline}
-        </a>
+        </button>
       ))}
     </div>
   );

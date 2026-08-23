@@ -60,3 +60,26 @@ export interface NewsArticle {
   datetime: number; // unix seconds
   related?: string;
 }
+
+export interface Profile {
+  userId: string;
+  email: string;
+  isAdmin: boolean;
+}
+
+export type FeedbackValue = "like" | "dislike";
+export type ArticleFeedback = Record<number, FeedbackValue>;
+
+export type PostStatus = "published" | "pending";
+
+export interface Post {
+  id: string;
+  authorId: string;
+  authorName: string;
+  headline: string;
+  body: string;
+  imageUrl?: string;
+  symbol?: string;
+  status: PostStatus;
+  createdAt: number;
+}
