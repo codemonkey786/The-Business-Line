@@ -279,7 +279,7 @@ export function MosaicFeed({
   if (!hero && stockSymbols.length === 0) return null;
 
   return (
-    <div className="board mt-4 overflow-hidden">
+    <div className="board mt-4 overflow-hidden" data-tour="feed">
       <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)]">
         <span className="display-bold text-lg tracking-tight">{title}</span>
       </div>

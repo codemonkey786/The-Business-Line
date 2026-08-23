@@ -13,6 +13,7 @@ import { LeaderboardPanel } from "./components/LeaderboardPanel";
 import { ProfileModal } from "./components/ProfileModal";
 import { ProfilePage } from "./components/ProfilePage";
 import { AuthModal } from "./components/AuthModal";
+import { ProductTour, type TourStep } from "./components/ProductTour";
 import { usePortfolio } from "./store/usePortfolio";
 import { useQuotes } from "./store/useQuotes";
 import { useProfiles } from "./store/useProfiles";
@@ -40,6 +41,19 @@ import { mergeFullAndLiveHistory } from "./lib/fullHistoryStorage";
 import { CATEGORY_LIBRARY, DEFAULT_CATEGORY_KEYS, symbolsForCategories } from "./lib/categories";
 import { filterNewsByStaffActivity } from "./lib/newsFiltering";
 import type { CallDirection, NewsArticle, Post } from "./lib/types";
+
+const TOUR_STEPS: TourStep[] = [
+  { selector: "[data-tour='search']", title: "Search the market", body: "Look up any S&P 500, Nasdaq 100, or Dow 30 stock and jump straight to it." },
+  { selector: "[data-tour='tabs']", title: "Get around", body: "Overview, History, Leaderboard, and your Profile — everything lives behind these four tabs." },
+  {
+    selector: "[data-tour='score']",
+    title: "Your credit score",
+    body: "Everyone starts at a theoretical 600. It moves for real based on the stock calls you back.",
+  },
+  { selector: "[data-tour='feed']", title: "Your feed", body: "Real market news mixed with posts from The Business Line staff." },
+  { selector: "[data-tour='watchlist']", title: "Track stocks", body: "Add symbols here to watch their price and back them Up or Down." },
+  { selector: "[data-tour='profile']", title: "Your account", body: "Manage your display name, sign out, or admin tools from here." },
+];
 
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signInWithGoogle, signOut, updateDisplayName } = useAuth();
@@ -98,6 +112,20 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<NavTab>("overview");
+  const [tourOpen, setTourOpen] = useState(false);
+
+  // A one-time walkthrough, shown right after a real sign-in — not for guests, and not again
+  // for an account that's already seen (or skipped) it once.
+  useEffect(() => {
+    if (!user) return;
+    if (localStorage.getItem(`tour-seen:${user.id}`)) return;
+    setTourOpen(true);
+  }, [user]);
+
+  function finishTour() {
+    if (user) localStorage.setItem(`tour-seen:${user.id}`, "1");
+    setTourOpen(false);
+  }
 
   // Guests can browse the dashboard with a theoretical (default, un-personalized) credit
   // score, but actually opening content requires an account — this is the shared gate for
@@ -331,7 +359,7 @@ export default function App() {
             sidebarCollapsed ? "w-0" : "w-[340px]"
           }`}
         >
-          <div className="w-[340px] flex-1 min-h-[140px] flex flex-col">
+          <div className="w-[340px] flex-1 min-h-[140px] flex flex-col" data-tour="watchlist">
             <WatchlistPanel
               watchlist={state.watchlist}
               quotes={quotes}
@@ -398,6 +426,8 @@ export default function App() {
           onClose={() => setAdminManagerOpen(false)}
         />
       )}
+
+      {tourOpen && <ProductTour steps={TOUR_STEPS} onFinish={finishTour} />}
 
       {authOpen && (
         <AuthModal

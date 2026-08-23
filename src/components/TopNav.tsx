@@ -40,11 +40,11 @@ export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, 
         <span className="display-bold text-[15px] tracking-tight text-white hidden sm:inline">The Business Line</span>
       </button>
 
-      <div className="w-full max-w-xs">
+      <div className="w-full max-w-xs" data-tour="search">
         <StockSearch onSelect={onSelectSymbol} compact />
       </div>
 
-      <nav className="hidden lg:flex items-center gap-1 text-sm font-medium text-[var(--color-ink-dim)]">
+      <nav data-tour="tabs" className="hidden lg:flex items-center gap-1 text-sm font-medium text-[var(--color-ink-dim)]">
         {NAV_LINKS.map((link) => (
           <button
             key={link.tab}
@@ -59,6 +59,7 @@ export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, 
       </nav>
 
       <button
+        data-tour="profile"
         onClick={onOpenProfile}
         title="Profile"
         className="ml-auto w-7 h-7 shrink-0 rounded-full flex items-center justify-center hover:brightness-125 hover:bg-white/[0.06] transition-all"

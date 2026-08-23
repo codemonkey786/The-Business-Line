@@ -61,7 +61,7 @@ export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose, req
 
   if (!hasSupabaseConfig()) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" onClick={onClose}>
         <div className="board w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-4">
             <p className="font-semibold text-[15px]">Accounts aren't set up yet</p>
@@ -104,14 +104,14 @@ export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose, req
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4"
       onClick={required ? undefined : onClose}
     >
       <div className="board w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/[0.06]">
-              <Mail size={16} className="text-[var(--color-ink-dim)]" />
+            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-amber)]/15">
+              <Mail size={16} className="text-[var(--color-amber)]" />
             </div>
             <p className="font-semibold text-[15px]">{mode === "signIn" ? "Sign In" : "Create Account"}</p>
           </div>

@@ -78,6 +78,7 @@ export function CreditGauge({ score, band, delta, scoreHistory = [] }: Props) {
 
   return (
     <div
+      data-tour="score"
       className="board p-6 flex flex-col items-center"
       style={{ boxShadow: `0 0 60px -6px ${color}66, 0 0 120px -20px ${color}40, inset 0 0 80px -30px ${color}33` }}
     >
