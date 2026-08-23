@@ -93,5 +93,14 @@ export function usePosts(user: User | null) {
     if (!error) setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, status: "published" } : p)));
   }, []);
 
-  return { posts, loading, createPost, deletePost, approvePost };
+  // Your byline is a live "who you are", not a frozen fact about the moment you posted — so
+  // changing your display name retroactively relabels everything you've already published,
+  // the same way changing your name on any real platform updates it everywhere at once.
+  const renameMyPosts = useCallback(async (authorId: string, authorName: string) => {
+    if (!supabase) return;
+    const { error } = await supabase.from("posts").update({ author_name: authorName }).eq("author_id", authorId);
+    if (!error) setPosts((prev) => prev.map((p) => (p.authorId === authorId ? { ...p, authorName } : p)));
+  }, []);
+
+  return { posts, loading, createPost, deletePost, approvePost, renameMyPosts };
 }

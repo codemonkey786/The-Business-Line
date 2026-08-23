@@ -88,3 +88,10 @@ create policy "Admins can delete their own posts"
       or exists (select 1 from public.profiles p where p.user_id = auth.uid() and p.is_admin = true)
     )
   );
+
+-- Run this once — lets an author update their own posts (used to relabel your byline
+-- everywhere at once when you change your display name).
+create policy "Authors can update their own posts"
+  on public.posts for update
+  using (auth.uid() = author_id)
+  with check (auth.uid() = author_id);

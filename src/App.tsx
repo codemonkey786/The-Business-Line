@@ -64,7 +64,13 @@ export default function App() {
   const displayName = (user?.user_metadata as { display_name?: string } | undefined)?.display_name;
   const { state, pick, closeCall, setScoreImpact, toggleWatchlist, syncStatus } = usePortfolio(user?.id);
   const { isAdmin, isOwner } = useAdmin(user);
-  const { posts, createPost, deletePost, approvePost } = usePosts(user);
+  const { posts, createPost, deletePost, approvePost, renameMyPosts } = usePosts(user);
+
+  // Changing your display name should relabel your existing posts too, not just future ones.
+  async function handleUpdateDisplayName(name: string) {
+    await updateDisplayName(name);
+    if (user?.id) await renameMyPosts(user.id, name);
+  }
   const publishedPosts = useMemo(() => posts.filter((p) => p.status === "published"), [posts]);
   const adminManagement = useAdminManagement(isOwner);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -354,7 +360,7 @@ export default function App() {
                 onOpenPost={setReadingPost}
                 displayName={displayName}
                 userEmail={user?.email}
-                onUpdateDisplayName={user ? updateDisplayName : undefined}
+                onUpdateDisplayName={user ? handleUpdateDisplayName : undefined}
                 portfolio={state}
                 profiles={profiles}
                 betas={betas}
@@ -424,7 +430,7 @@ export default function App() {
           createdAt={state.createdAt}
           user={user}
           syncStatus={syncStatus}
-          onUpdateDisplayName={updateDisplayName}
+          onUpdateDisplayName={handleUpdateDisplayName}
           onSignOut={() => {
             signOut();
             setProfileOpen(false);
