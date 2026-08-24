@@ -24,8 +24,13 @@ export function useAdmin(user: User | null) {
       if (cancelled) return;
 
       if (!data) {
-        const displayName = (user.user_metadata as { display_name?: string } | undefined)?.display_name;
-        await supabase!.from("profiles").insert({ user_id: user.id, email: user.email ?? "", display_name: displayName ?? null });
+        const meta = user.user_metadata as { display_name?: string; avatar_url?: string } | undefined;
+        await supabase!.from("profiles").insert({
+          user_id: user.id,
+          email: user.email ?? "",
+          display_name: meta?.display_name ?? null,
+          avatar_url: meta?.avatar_url ?? null,
+        });
         if (user.id === OWNER_USER_ID) {
           await supabase!.from("profiles").update({ is_admin: true }).eq("user_id", user.id);
           if (!cancelled) setIsAdminFlag(true);

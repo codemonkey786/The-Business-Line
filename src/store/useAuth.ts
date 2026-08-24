@@ -60,5 +60,14 @@ export function useAuth() {
     if (data.user) setSession((prev) => (prev ? { ...prev, user: data.user } : prev));
   }
 
-  return { session, user: session?.user ?? null, loading, signUp, signIn, signInWithGoogle, signOut, updateDisplayName };
+  // Same pattern as updateDisplayName — stores the uploaded avatar's public URL on the account
+  // itself so it's there next time you sign in anywhere, not just this session.
+  async function updateAvatar(url: string) {
+    if (!supabase) throw new Error("Supabase isn't configured yet.");
+    const { data, error } = await supabase.auth.updateUser({ data: { avatar_url: url } });
+    if (error) throw error;
+    if (data.user) setSession((prev) => (prev ? { ...prev, user: data.user } : prev));
+  }
+
+  return { session, user: session?.user ?? null, loading, signUp, signIn, signInWithGoogle, signOut, updateDisplayName, updateAvatar };
 }

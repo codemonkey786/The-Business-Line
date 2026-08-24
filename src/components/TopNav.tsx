@@ -9,6 +9,7 @@ interface Props {
   onSelectSymbol: (symbol: string) => void;
   onOpenProfile: () => void;
   scoreColor: string;
+  avatarUrl?: string;
 }
 
 const NAV_LINKS: { label: string; tab: NavTab; icon: typeof Home }[] = [
@@ -17,7 +18,7 @@ const NAV_LINKS: { label: string; tab: NavTab; icon: typeof Home }[] = [
   { label: "Profile", tab: "profile", icon: User },
 ];
 
-export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, scoreColor }: Props) {
+export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, scoreColor, avatarUrl }: Props) {
   return (
     <header className="h-10 shrink-0 border-b border-[var(--color-border-soft)] flex items-center px-5 gap-6 bg-[var(--color-surface)]">
       <button onClick={() => onTabChange("overview")} title="Home" className="flex items-center gap-2.5 shrink-0 hover:brightness-110 transition-all">
@@ -61,10 +62,10 @@ export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, 
         data-tour="profile"
         onClick={onOpenProfile}
         title="Profile"
-        className="ml-auto w-7 h-7 shrink-0 rounded-full flex items-center justify-center hover:brightness-125 hover:bg-white/[0.06] transition-all"
+        className="ml-auto w-7 h-7 shrink-0 rounded-full flex items-center justify-center overflow-hidden hover:brightness-125 hover:bg-white/[0.06] transition-all"
         style={{ color: scoreColor }}
       >
-        <User size={15} />
+        {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={15} />}
       </button>
     </header>
   );

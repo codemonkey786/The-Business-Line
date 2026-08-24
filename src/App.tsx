@@ -26,6 +26,7 @@ import { useAdmin } from "./store/useAdmin";
 import { useAdminManagement } from "./store/useAdminManagement";
 import { useLeaderboard } from "./store/useLeaderboard";
 import { useProfileSync } from "./store/useProfileSync";
+import { uploadAvatar } from "./lib/avatarImage";
 import { usePosts } from "./store/usePosts";
 import { ArticleReader } from "./components/ArticleReader";
 import { PostReader } from "./components/PostReader";
@@ -62,8 +63,18 @@ const TOUR_STEPS: TourStep[] = [
 ];
 
 export default function App() {
-  const { user, loading: authLoading, signIn, signUp, signInWithGoogle, signOut, updateDisplayName } = useAuth();
-  const displayName = (user?.user_metadata as { display_name?: string } | undefined)?.display_name;
+  const { user, loading: authLoading, signIn, signUp, signInWithGoogle, signOut, updateDisplayName, updateAvatar } = useAuth();
+  const userMeta = user?.user_metadata as { display_name?: string; avatar_url?: string } | undefined;
+  const displayName = userMeta?.display_name;
+  const avatarUrl = userMeta?.avatar_url;
+
+  // Uploads to the user's own folder in the avatars bucket, then stores the resulting public
+  // URL on the account (mirrors handleUpdateDisplayName) so it's there next time they sign in.
+  async function handleUpdateAvatar(file: File) {
+    if (!user?.id) return;
+    const url = await uploadAvatar(file, user.id);
+    await updateAvatar(url);
+  }
   const { state, pick, closeCall, setScoreImpact, toggleWatchlist, syncStatus } = usePortfolio(user?.id);
   const { isAdmin, isOwner } = useAdmin(user);
   const { posts, createPost, deletePost, approvePost, renameMyPosts } = usePosts(user);
@@ -117,7 +128,7 @@ export default function App() {
     () => mergeDailyAndIntradayScoreHistory(dailyScoreHistory, scoreHistory),
     [dailyScoreHistory, scoreHistory]
   );
-  useProfileSync(user?.id, displayName, scoreResult.score);
+  useProfileSync(user?.id, displayName, avatarUrl, scoreResult.score);
   const leaderboard = useLeaderboard(Boolean(user));
 
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(state.watchlist[0] ?? null);
@@ -269,6 +280,7 @@ export default function App() {
           onSelectSymbol={handleAddSymbol}
           onOpenProfile={() => setProfileOpen(true)}
           scoreColor={bandColorVar(scoreResult.band)}
+          avatarUrl={avatarUrl}
         />
         {!hasApiKey() && <ApiKeyNotice />}
 
@@ -438,8 +450,10 @@ export default function App() {
           calls={state.calls}
           createdAt={state.createdAt}
           user={user}
+          avatarUrl={avatarUrl}
           syncStatus={syncStatus}
           onUpdateDisplayName={handleUpdateDisplayName}
+          onUpdateAvatar={handleUpdateAvatar}
           onSignOut={() => {
             signOut();
             setProfileOpen(false);

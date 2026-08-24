@@ -66,6 +66,7 @@ export interface Profile {
   email: string;
   isAdmin: boolean;
   displayName?: string;
+  avatarUrl?: string;
   score?: number;
 }
 

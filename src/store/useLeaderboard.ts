@@ -14,7 +14,7 @@ export function useLeaderboard(enabled: boolean) {
     setLoading(true);
     const { data } = await supabase
       .from("profiles")
-      .select("user_id, email, display_name, score, is_admin")
+      .select("user_id, email, display_name, avatar_url, score, is_admin")
       .not("score", "is", null)
       .order("score", { ascending: false })
       .limit(50);
@@ -24,6 +24,7 @@ export function useLeaderboard(enabled: boolean) {
         email: p.email,
         isAdmin: p.is_admin,
         displayName: p.display_name ?? undefined,
+        avatarUrl: p.avatar_url ?? undefined,
         score: p.score ?? undefined,
       }))
     );

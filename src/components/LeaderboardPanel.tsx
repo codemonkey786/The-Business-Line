@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Newspaper, Trophy, Eye, ListChecks, Gauge, User } from "lucide-react";
 import { CompanyLogo } from "./CompanyLogo";
+import { MiniCreditGauge } from "./MiniCreditGauge";
 import type { CompanyProfile, NewsArticle, Profile, Quote } from "../lib/types";
-import { SCORE_BANDS, bandForScore, bandColorVar, type ScoreBand } from "../lib/creditScore";
+import { bandForScore, bandColorVar, type ScoreBand } from "../lib/creditScore";
 
 interface Props {
   articles: NewsArticle[];
@@ -25,55 +26,6 @@ const RANK_COLORS = ["#ffd54a", "#c9c9d4", "#d2895a", "var(--color-ink-faint)"];
 
 function rankColor(i: number) {
   return RANK_COLORS[Math.min(i, 3)];
-}
-
-const SCORE_MIN = 300;
-const SCORE_MAX = 850;
-
-// A miniature version of the real half-circle credit gauge on Overview — same six color
-// bands and needle, just small enough to sit inline next to the score.
-function MiniCreditGauge({ score, size = 56 }: { score: number; size?: number }) {
-  const w = size;
-  const h = size / 2 + 6;
-  const cx = w / 2;
-  const cy = h - 5;
-  const r = w / 2 - 3;
-  const gap = 2.5;
-
-  function polar(radius: number, angleDeg: number) {
-    const rad = (angleDeg * Math.PI) / 180;
-    return { x: cx + radius * Math.cos(rad), y: cy - radius * Math.sin(rad) };
-  }
-  function wedge(startAngle: number, endAngle: number) {
-    const a = polar(r, startAngle);
-    const b = polar(r, endAngle);
-    return `M ${cx} ${cy} L ${a.x} ${a.y} A ${r} ${r} 0 0 1 ${b.x} ${b.y} Z`;
-  }
-
-  const pct = Math.max(0, Math.min(1, (score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN)));
-  const needleAngle = 180 - pct * 180;
-  const needleTip = polar(r - 3, needleAngle);
-
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0 overflow-visible">
-      {SCORE_BANDS.map((b, i) => {
-        const rawStart = 180 - i * 30;
-        const rawEnd = 180 - (i + 1) * 30;
-        return <path key={b.band} d={wedge(rawStart - gap / 2, rawEnd + gap / 2)} fill={b.color} />;
-      })}
-      <line
-        x1={cx}
-        y1={cy}
-        x2={needleTip.x}
-        y2={needleTip.y}
-        stroke="#fff"
-        strokeWidth={2}
-        strokeLinecap="round"
-        style={{ filter: "drop-shadow(0 0 3px rgba(255,255,255,0.85))" }}
-      />
-      <circle cx={cx} cy={cy} r={2.5} fill="#fff" />
-    </svg>
-  );
 }
 
 // Real domains for each outlet's actual favicon — fetched live from Google's favicon service
@@ -232,10 +184,10 @@ function ScoreRow({ rank, entry, isYou }: { rank: number; entry: Profile; isYou:
         {rank}
       </span>
       <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+        className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shrink-0"
         style={{ background: `${entryBandColor}22`, color: entryBandColor }}
       >
-        <User size={14} />
+        {entry.avatarUrl ? <img src={entry.avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={14} />}
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold truncate">
