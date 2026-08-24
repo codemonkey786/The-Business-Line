@@ -98,7 +98,16 @@ export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose, req
         await onSignIn(email, password);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      // The single most common way someone gets stuck: they already made an account (maybe
+      // before it could log you straight in) and try "sign up" again instead of "sign in" —
+      // Supabase's own error here is accurate but doesn't say what to actually do about it.
+      if (mode === "signUp" && /already registered|already exists/i.test(message)) {
+        setMode("signIn");
+        setError("You already have an account with this email — sign in instead (same password you set before).");
+      } else {
+        setError(message);
+      }
     } finally {
       setSubmitting(false);
     }
