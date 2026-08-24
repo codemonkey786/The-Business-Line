@@ -124,7 +124,10 @@ export function ProfileModal({
                 title="Change profile picture"
                 className="relative w-11 h-11 shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] focus:ring-[var(--color-amber)]"
               >
-                <span className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center" style={{ background: `${color}22` }}>
+                <span
+                  className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
+                  style={{ background: `${color}22`, boxShadow: `0 0 0 2px ${color}55, 0 0 14px -2px ${color}90` }}
+                >
                   {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={20} style={{ color }} />}
                 </span>
                 {/* Always-on corner badge, not hover-only — a photo that already fills the circle gives
@@ -138,7 +141,10 @@ export function ProfileModal({
                 <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
               </button>
             ) : (
-              <div className="w-11 h-11 shrink-0 rounded-full flex items-center justify-center overflow-hidden" style={{ background: `${color}22` }}>
+              <div
+                className="w-11 h-11 shrink-0 rounded-full flex items-center justify-center overflow-hidden"
+                style={{ background: `${color}22`, boxShadow: `0 0 0 2px ${color}55, 0 0 14px -2px ${color}90` }}
+              >
                 {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={20} style={{ color }} />}
               </div>
             )}
@@ -154,14 +160,35 @@ export function ProfileModal({
         {avatarError && <p className="text-xs text-[var(--color-down)] mb-5">{avatarError}</p>}
 
         <div
-          className="flex flex-col items-center pt-6 pb-5 mb-5 rounded-2xl border border-[var(--color-border-soft)]"
-          style={{ background: `${color}12`, boxShadow: `0 0 50px -18px ${color}66, inset 0 0 40px -26px ${color}40` }}
+          className="relative flex flex-col items-center pt-6 pb-5 mb-5 rounded-2xl border overflow-hidden"
+          style={{
+            borderColor: `${color}55`,
+            background: `${color}16`,
+            boxShadow: `0 0 90px -14px ${color}cc, 0 0 170px -28px ${color}88, inset 0 0 60px -22px ${color}66`,
+          }}
         >
-          <MiniCreditGauge score={score} size={176} />
-          <span className="display-bold text-[40px] leading-none mt-2" style={{ color, textShadow: `0 0 26px ${color}80` }}>
+          <div className="absolute inset-x-0 -top-6 flex justify-center pointer-events-none">
+            <div
+              className="glow-halo rounded-full"
+              style={{
+                width: 280,
+                height: 280,
+                background: `radial-gradient(circle, ${color} 0%, ${color}80 40%, transparent 72%)`,
+                filter: "blur(26px)",
+                mixBlendMode: "screen",
+              }}
+            />
+          </div>
+          <div className="relative">
+            <MiniCreditGauge score={score} size={176} glow />
+          </div>
+          <span
+            className="relative display-bold text-[40px] leading-none mt-2"
+            style={{ color, textShadow: `0 0 18px ${color}, 0 0 48px ${color}99, 0 0 90px ${color}55` }}
+          >
             {score.toFixed(0)}
           </span>
-          <span className="text-xs font-bold uppercase tracking-wider mt-1.5" style={{ color }}>
+          <span className="relative text-xs font-bold uppercase tracking-wider mt-1.5" style={{ color, textShadow: `0 0 14px ${color}90` }}>
             {band}
           </span>
         </div>
