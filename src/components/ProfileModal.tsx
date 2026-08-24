@@ -196,7 +196,7 @@ export function ProfileModal({
         <div className="grid grid-cols-2 gap-2">
           <StatTile label="All-Time Win Rate" value={winRate != null ? `${Math.round(winRate * 100)}%` : "—"} />
           <StatTile label="Stocks Backed" value={String(distinctSymbols)} />
-          <StatTile label="Active Calls" value={String(open.length)} />
+          <StatTile label="Active Stocks Backed" value={String(open.length)} />
           <StatTile label="Closed Calls" value={String(closed.length)} />
           {best && (
             <StatTile
