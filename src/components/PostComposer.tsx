@@ -194,7 +194,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
           </div>
           <p className="font-semibold text-[15px]">New Post</p>
         </div>
-        <button onClick={onClose} className="text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors">
+        <button onClick={onClose} className="text-[var(--color-ink)] hover:text-[var(--color-amber)] transition-colors">
           <X size={20} />
         </button>
       </div>
@@ -207,7 +207,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
                 <Clock size={20} className="text-[var(--color-amber)]" />
               </div>
               <p className="font-semibold text-[15px]">Sent for review</p>
-              <p className="text-sm text-[var(--color-ink-dim)] leading-relaxed">
+              <p className="text-sm text-[var(--color-ink)] leading-relaxed">
                 This post contains language that needs review, so it isn't public yet. An admin needs to approve it first — you can check
                 its status anytime on your Profile page.
               </p>
@@ -227,17 +227,17 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
                 placeholder="Headline"
                 value={headline}
                 onChange={(e) => setHeadline(e.target.value)}
-                className="display-bold w-full bg-transparent text-3xl md:text-4xl leading-tight text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] outline-none pb-3 border-b border-[var(--color-border-soft)] focus:border-[var(--color-amber)]/50 transition-colors"
+                className="display-bold w-full bg-transparent text-3xl md:text-4xl leading-tight text-[var(--color-ink)] placeholder:text-[var(--color-ink-dim)] outline-none pb-3 border-b border-[var(--color-border-soft)] focus:border-[var(--color-amber)]/50 transition-colors"
               />
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs text-[var(--color-ink-faint)]">Body</label>
+                  <label className="text-xs font-semibold text-[var(--color-ink)]">Body</label>
                   <button
                     type="button"
                     onMouseDown={saveSelection}
                     onClick={() => inlineFileInputRef.current?.click()}
                     disabled={insertingImage}
-                    className="flex items-center gap-1 text-xs font-semibold text-[var(--color-ink-dim)] hover:text-[var(--color-ink)] transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1 text-xs font-semibold text-[var(--color-ink)] hover:text-[var(--color-amber)] transition-colors disabled:opacity-50"
                   >
                     <ImagePlus size={12} />
                     {insertingImage ? "Uploading…" : "Insert Image"}
@@ -253,21 +253,21 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
                   onPaste={handleBodyPaste}
                   onClick={handleBodyClick}
                   data-placeholder="Write the post… use Insert Image to drop a photo between paragraphs"
-                  className="post-body-editor w-full min-h-[50vh] px-3 py-2.5 rounded-lg bg-white/[0.06] text-base leading-relaxed text-[var(--color-ink)] outline-none focus:bg-white/[0.09] transition-colors whitespace-pre-wrap"
+                  className="post-body-editor w-full min-h-[50vh] px-3 py-2.5 rounded-lg bg-white/[0.06] border border-[var(--color-border)] text-base leading-relaxed text-[var(--color-ink)] outline-none focus:bg-white/[0.09] focus:border-[var(--color-amber)]/50 transition-colors whitespace-pre-wrap"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-[var(--color-ink-faint)] mb-1.5 block">
+                <label className="text-xs font-semibold text-[var(--color-ink)] mb-1.5 block">
                   Tag a stock (optional) — shows a live mini chart at the top of the post
                 </label>
                 {symbol ? (
-                  <div className="inline-flex items-center gap-1.5 bg-white/[0.08] rounded-full pl-3 pr-1.5 py-1">
-                    <span className="text-xs font-bold">{symbol}</span>
+                  <div className="inline-flex items-center gap-1.5 bg-white/[0.08] border border-[var(--color-border)] rounded-full pl-3 pr-1.5 py-1">
+                    <span className="text-xs font-bold text-[var(--color-ink)]">{symbol}</span>
                     <button
                       type="button"
                       onClick={() => setSymbol(null)}
-                      className="w-4 h-4 flex items-center justify-center rounded-full text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
+                      className="w-4 h-4 flex items-center justify-center rounded-full text-[var(--color-ink)] hover:text-[var(--color-amber)]"
                     >
                       <X size={11} />
                     </button>
@@ -278,7 +278,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
               </div>
 
               <div>
-                <label className="text-xs text-[var(--color-ink-faint)] mb-1.5 block">Cover image (optional)</label>
+                <label className="text-xs font-semibold text-[var(--color-ink)] mb-1.5 block">Cover image (optional)</label>
                 {imageUrl ? (
                   <div className="relative">
                     <img src={imageUrl} alt="" className="w-full h-48 object-cover rounded-lg" />
@@ -296,7 +296,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold bg-white/[0.06] text-[var(--color-ink-dim)] hover:bg-white/[0.1] transition-colors disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold bg-white/[0.06] border border-[var(--color-border)] text-[var(--color-ink)] hover:bg-white/[0.1] hover:border-[var(--color-amber)]/50 transition-colors disabled:opacity-50"
                     >
                       <ImagePlus size={14} />
                       {uploading ? "Uploading…" : "Upload Image"}
@@ -307,7 +307,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
                       placeholder="…or paste an image URL"
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-xs text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] outline-none focus:bg-white/[0.09] transition-colors"
+                      className="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-[var(--color-border)] text-xs text-[var(--color-ink)] placeholder:text-[var(--color-ink-dim)] outline-none focus:bg-white/[0.09] focus:border-[var(--color-amber)]/50 transition-colors"
                     />
                   </div>
                 )}

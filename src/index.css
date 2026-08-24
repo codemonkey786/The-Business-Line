@@ -107,7 +107,7 @@
 
   .post-body-editor:empty:before {
     content: attr(data-placeholder);
-    color: var(--color-ink-faint);
+    color: var(--color-ink-dim);
     pointer-events: none;
   }
 
