@@ -258,6 +258,7 @@ export function ProfilePage({
   return (
     <div>
       <ScoreHero score={score} band={band} delta={delta} scoreHistory={scoreHistory} />
+      <ScoreStatsPanel history={scoreProgressHistory} dailyHistory={scoreProgressDailyHistory} bandColor={bandColorVar(band)} />
 
       {onUpdateDisplayName && (
         <DisplayNameEditor displayName={displayName} userEmail={userEmail} onUpdateDisplayName={onUpdateDisplayName} />
@@ -265,7 +266,6 @@ export function ProfilePage({
 
       <PositionsTable state={portfolio} quotes={quotes} profiles={profiles} betas={betas} winRate={winRate} status="open" history={priceHistory} />
       <PositionsTable state={portfolio} quotes={quotes} profiles={profiles} betas={betas} winRate={winRate} status="closed" />
-      <ScoreStatsPanel history={scoreProgressHistory} dailyHistory={scoreProgressDailyHistory} bandColor={bandColorVar(band)} />
 
       {isAdmin ? (
         <>
