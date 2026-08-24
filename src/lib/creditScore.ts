@@ -179,20 +179,27 @@ function currentAccuracyFactor(calls: Call[], quotes: Record<string, Quote>, bet
 // Factor 3: Length of History (15%) — account age + hold duration, open positions included.
 // A call still counts its time held even while open, so staying in a long-term position keeps
 // pushing this factor up in real time rather than only paying off once you close it.
+//
+// Both sub-scores are blended from a neutral 50 (not 0), same as every other factor's "no data
+// yet" baseline (Track Record starts at 68, Current Accuracy at 50) — a brand new account with
+// a freshly opened call has genuinely done nothing wrong yet, so it shouldn't score as if it had.
+// Without this, opening your very first call cliffs this factor from "unused" straight to 0,
+// which alone was worth ~45+ score points — directly contradicting the intent documented on
+// Current Accuracy above, that opening a call should never move the score by itself.
 function historyLengthFactor(state: PortfolioState): ScoreFactor {
   const ageDays = (Date.now() - state.createdAt) / 86_400_000;
-  const ageScore = clamp((ageDays / 30) * 100);
+  const ageScore = 50 + clamp((ageDays / 30) * 100) * 0.5;
 
   const now = Date.now();
   const holdDurationsDays = state.calls.map((c) => (c.closedAt ?? now) - c.openedAt).map((ms) => ms / 86_400_000);
 
-  let holdScore = 60;
+  let holdScore = 50;
   let longestHoldDays = 0;
   if (holdDurationsDays.length > 0) {
     longestHoldDays = Math.max(...holdDurationsDays);
     const avgHoldDays = holdDurationsDays.reduce((a, b) => a + b, 0) / holdDurationsDays.length;
     // Full credit at a 21-day average hold — genuinely long-term, not just overnight.
-    holdScore = clamp((avgHoldDays / 21) * 100);
+    holdScore = 50 + clamp((avgHoldDays / 21) * 100) * 0.5;
   }
 
   const value = clamp(ageScore * 0.35 + holdScore * 0.65);
