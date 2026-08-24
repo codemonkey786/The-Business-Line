@@ -339,21 +339,6 @@ export default function App() {
                 articleLikeCounts={articleLikeCounts}
                 articleDislikeCounts={articleDislikeCounts}
               />
-
-              {(composerOpen || editingPost) && user?.id && (
-                <Suspense fallback={null}>
-                  <PostComposer
-                    userId={user.id}
-                    post={editingPost ?? undefined}
-                    onCreate={createPost}
-                    onUpdate={updatePost}
-                    onClose={() => {
-                      setComposerOpen(false);
-                      setEditingPost(null);
-                    }}
-                  />
-                </Suspense>
-              )}
             </>
           ) : activeTab === "leaderboard" ? (
             <Suspense fallback={TAB_FALLBACK}>
@@ -427,6 +412,21 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {(composerOpen || editingPost) && user?.id && (
+        <Suspense fallback={null}>
+          <PostComposer
+            userId={user.id}
+            post={editingPost ?? undefined}
+            onCreate={createPost}
+            onUpdate={updatePost}
+            onClose={() => {
+              setComposerOpen(false);
+              setEditingPost(null);
+            }}
+          />
+        </Suspense>
+      )}
 
       <div className="relative flex shrink-0">
         <button
