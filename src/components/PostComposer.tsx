@@ -1,13 +1,16 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlignCenter, AlignLeft, AlignRight, Clock, ImagePlus, Newspaper, X } from "lucide-react";
 import { StockSearch } from "./StockSearch";
 import { uploadPostImage } from "../lib/postImages";
-import type { ImageAlign } from "../lib/postContent";
+import { parsePostBody, type ImageAlign } from "../lib/postContent";
 import type { Post } from "../lib/types";
 
 interface Props {
   userId: string;
+  // Present when editing an already-published post instead of writing a new one.
+  post?: Post;
   onCreate: (headline: string, body: string, imageUrl?: string, symbol?: string, credits?: string) => Promise<Post>;
+  onUpdate?: (id: string, headline: string, body: string, imageUrl?: string, symbol?: string, credits?: string) => Promise<void>;
   onClose: () => void;
 }
 
@@ -18,12 +21,28 @@ function imageClassFor(align: ImageAlign): string {
   return `${base} block max-w-full mx-auto`;
 }
 
-export function PostComposer({ userId, onCreate, onClose }: Props) {
-  const [headline, setHeadline] = useState("");
-  const [body, setBody] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [symbol, setSymbol] = useState<string | null>(null);
-  const [credits, setCredits] = useState("");
+// Rebuilds the editor's DOM (text + <br> + <img> nodes) from a post's stored "![](url)"-marker
+// body — the exact inverse of serializeEditor below, so hydrating an existing post for editing
+// round-trips losslessly through the same format new posts are already saved in.
+function blocksToEditorHtml(body: string): string {
+  const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return parsePostBody(body)
+    .map((b) => {
+      if (b.type === "image") {
+        const safeUrl = b.url.replace(/"/g, "&quot;");
+        return `<img src="${safeUrl}" data-url="${safeUrl}" data-align="${b.align}" contenteditable="false" class="${imageClassFor(b.align)}" />`;
+      }
+      return b.text.split("\n").map(escape).join("<br>");
+    })
+    .join("<br>");
+}
+
+export function PostComposer({ userId, post, onCreate, onUpdate, onClose }: Props) {
+  const [headline, setHeadline] = useState(post?.headline ?? "");
+  const [body, setBody] = useState(post?.body ?? "");
+  const [imageUrl, setImageUrl] = useState(post?.imageUrl ?? "");
+  const [symbol, setSymbol] = useState<string | null>(post?.symbol ?? null);
+  const [credits, setCredits] = useState(post?.credits ?? "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -34,6 +53,16 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
   const inlineFileInputRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
+
+  // contentEditable isn't a controlled input — its initial content has to be set directly on
+  // the DOM node once, not passed as a React prop, or React's own re-render would wipe out
+  // whatever the browser does with typed/pasted content in between.
+  useEffect(() => {
+    if (post && bodyRef.current) {
+      bodyRef.current.innerHTML = blocksToEditorHtml(post.body);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -173,11 +202,16 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
     setError(null);
     setSubmitting(true);
     try {
-      const created = await onCreate(headline.trim(), body.trim(), imageUrl.trim() || undefined, symbol ?? undefined, credits.trim() || undefined);
-      if (created.status === "pending") {
-        setPending(true);
-      } else {
+      if (post && onUpdate) {
+        await onUpdate(post.id, headline.trim(), body.trim(), imageUrl.trim() || undefined, symbol ?? undefined, credits.trim() || undefined);
         onClose();
+      } else {
+        const created = await onCreate(headline.trim(), body.trim(), imageUrl.trim() || undefined, symbol ?? undefined, credits.trim() || undefined);
+        if (created.status === "pending") {
+          setPending(true);
+        } else {
+          onClose();
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -193,7 +227,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
           <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-amber)]/15">
             <Newspaper size={16} className="text-[var(--color-amber)]" />
           </div>
-          <p className="font-semibold text-[15px]">New Post</p>
+          <p className="font-semibold text-[15px]">{post ? "Edit Post" : "New Post"}</p>
         </div>
         <button onClick={onClose} className="text-[var(--color-ink)] hover:text-[var(--color-amber)] transition-colors">
           <X size={20} />
@@ -334,7 +368,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
                 disabled={submitting || uploading || insertingImage || !headline.trim() || !body.trim()}
                 className="w-full py-3 rounded-lg text-sm font-semibold text-black bg-[var(--color-amber)] hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 mt-1"
               >
-                {submitting ? "Posting…" : "Post"}
+                {post ? (submitting ? "Saving…" : "Save Changes") : submitting ? "Posting…" : "Post"}
               </button>
             </form>
           )}

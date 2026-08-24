@@ -112,12 +112,14 @@ function PostRow({
   onOpen,
   onDelete,
   onApprove,
+  onEdit,
 }: {
   post: Post;
   quote?: Quote;
   onOpen: (post: Post) => void;
   onDelete: () => void;
   onApprove?: () => void;
+  onEdit?: () => void;
 }) {
   const positive = (quote?.percentChange ?? 0) >= 0;
   return (
@@ -180,6 +182,15 @@ function PostRow({
             Approve
           </button>
         )}
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] hover:bg-white/[0.06] transition-colors"
+          >
+            <Pencil size={12} />
+            Edit
+          </button>
+        )}
         <button
           onClick={onDelete}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-[var(--color-ink-faint)] hover:text-[var(--color-down)] hover:bg-[var(--color-down)]/10 transition-colors"
@@ -204,6 +215,7 @@ interface Props {
   onDeletePost: (id: string) => Promise<void>;
   onApprovePost: (id: string) => Promise<void>;
   onOpenPost: (post: Post) => void;
+  onEditPost?: (post: Post) => void;
   displayName?: string;
   userEmail?: string;
   onUpdateDisplayName?: (name: string) => Promise<void>;
@@ -228,6 +240,7 @@ export function ProfilePage({
   onDeletePost,
   onApprovePost,
   onOpenPost,
+  onEditPost,
   displayName,
   userEmail,
   onUpdateDisplayName,
@@ -296,6 +309,7 @@ export function ProfilePage({
                     quote={post.symbol ? quotes[post.symbol] : undefined}
                     onOpen={onOpenPost}
                     onDelete={() => onDeletePost(post.id)}
+                    onEdit={onEditPost ? () => onEditPost(post) : undefined}
                   />
                 ))}
               </div>

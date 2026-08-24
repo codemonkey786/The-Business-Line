@@ -77,7 +77,7 @@ export default function App() {
   }
   const { state, pick, closeCall, setScoreImpact, toggleWatchlist, syncStatus } = usePortfolio(user?.id);
   const { isAdmin, isOwner } = useAdmin(user);
-  const { posts, createPost, deletePost, approvePost, renameMyPosts } = usePosts(user);
+  const { posts, createPost, updatePost, deletePost, approvePost, renameMyPosts } = usePosts(user);
 
   // Changing your display name should relabel your existing posts too, not just future ones.
   async function handleUpdateDisplayName(name: string) {
@@ -87,6 +87,7 @@ export default function App() {
   const publishedPosts = useMemo(() => posts.filter((p) => p.status === "published"), [posts]);
   const adminManagement = useAdminManagement(isOwner);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [adminManagerOpen, setAdminManagerOpen] = useState(false);
   const [readingArticle, setReadingArticle] = useState<NewsArticle | null>(null);
   const [readingPost, setReadingPost] = useState<Post | null>(null);
@@ -340,9 +341,18 @@ export default function App() {
                 articleDislikeCounts={articleDislikeCounts}
               />
 
-              {composerOpen && user?.id && (
+              {(composerOpen || editingPost) && user?.id && (
                 <Suspense fallback={null}>
-                  <PostComposer userId={user.id} onCreate={createPost} onClose={() => setComposerOpen(false)} />
+                  <PostComposer
+                    userId={user.id}
+                    post={editingPost ?? undefined}
+                    onCreate={createPost}
+                    onUpdate={updatePost}
+                    onClose={() => {
+                      setComposerOpen(false);
+                      setEditingPost(null);
+                    }}
+                  />
                 </Suspense>
               )}
             </>
@@ -379,6 +389,7 @@ export default function App() {
                 onDeletePost={deletePost}
                 onApprovePost={approvePost}
                 onOpenPost={setReadingPost}
+                onEditPost={setEditingPost}
                 displayName={displayName}
                 userEmail={user?.email}
                 onUpdateDisplayName={user ? handleUpdateDisplayName : undefined}

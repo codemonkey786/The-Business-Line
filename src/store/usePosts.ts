@@ -90,6 +90,20 @@ export function usePosts(user: User | null) {
     if (!error) setPosts((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
+  const updatePost = useCallback(
+    async (id: string, headline: string, body: string, imageUrl?: string, symbol?: string, credits?: string): Promise<void> => {
+      if (!supabase) return;
+      const { error } = await supabase
+        .from("posts")
+        .update({ headline, body, image_url: imageUrl || null, symbol: symbol || null, credits: credits || null })
+        .eq("id", id);
+      if (!error) {
+        setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, headline, body, imageUrl, symbol, credits } : p)));
+      }
+    },
+    []
+  );
+
   const approvePost = useCallback(async (id: string) => {
     if (!supabase) return;
     const { error } = await supabase.from("posts").update({ status: "published" }).eq("id", id);
@@ -105,5 +119,5 @@ export function usePosts(user: User | null) {
     if (!error) setPosts((prev) => prev.map((p) => (p.authorId === authorId ? { ...p, authorName } : p)));
   }, []);
 
-  return { posts, loading, createPost, deletePost, approvePost, renameMyPosts };
+  return { posts, loading, createPost, updatePost, deletePost, approvePost, renameMyPosts };
 }
