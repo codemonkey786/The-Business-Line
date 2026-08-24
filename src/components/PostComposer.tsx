@@ -186,143 +186,145 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" onClick={onClose}>
-      <div className="board w-full max-w-md p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-amber)]/15">
-              <Newspaper size={16} className="text-[var(--color-amber)]" />
-            </div>
-            <p className="font-semibold text-[15px]">New Post</p>
+    <div className="fixed inset-0 z-50 bg-[var(--color-bg)] flex flex-col">
+      <div className="flex items-center justify-between px-5 md:px-8 py-4 border-b border-[var(--color-border-soft)] shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-amber)]/15">
+            <Newspaper size={16} className="text-[var(--color-amber)]" />
           </div>
-          <button onClick={onClose} className="text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors">
-            <X size={18} />
-          </button>
+          <p className="font-semibold text-[15px]">New Post</p>
         </div>
+        <button onClick={onClose} className="text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors">
+          <X size={20} />
+        </button>
+      </div>
 
-        {pending ? (
-          <div className="flex flex-col items-center text-center gap-3 py-4">
-            <div className="w-11 h-11 rounded-full flex items-center justify-center bg-[var(--color-amber)]/15">
-              <Clock size={20} className="text-[var(--color-amber)]" />
-            </div>
-            <p className="font-semibold text-[15px]">Sent for review</p>
-            <p className="text-sm text-[var(--color-ink-dim)] leading-relaxed">
-              This post contains language that needs review, so it isn't public yet. An admin needs to approve it first — you can check
-              its status anytime on your Profile page.
-            </p>
-            <button
-              onClick={onClose}
-              className="w-full py-2.5 rounded-lg text-sm font-semibold text-black bg-[var(--color-amber)] hover:brightness-110 active:scale-[0.98] transition-all mt-1"
-            >
-              Done
-            </button>
-          </div>
-        ) : (
-        <form onSubmit={submit} className="flex flex-col gap-3">
-          <input
-            required
-            autoFocus
-            maxLength={140}
-            placeholder="Headline"
-            value={headline}
-            onChange={(e) => setHeadline(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-white/[0.06] text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] outline-none focus:bg-white/[0.09] transition-colors"
-          />
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs text-[var(--color-ink-faint)]">Body</label>
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-5 md:px-8 py-8">
+          {pending ? (
+            <div className="flex flex-col items-center text-center gap-3 py-4">
+              <div className="w-11 h-11 rounded-full flex items-center justify-center bg-[var(--color-amber)]/15">
+                <Clock size={20} className="text-[var(--color-amber)]" />
+              </div>
+              <p className="font-semibold text-[15px]">Sent for review</p>
+              <p className="text-sm text-[var(--color-ink-dim)] leading-relaxed">
+                This post contains language that needs review, so it isn't public yet. An admin needs to approve it first — you can check
+                its status anytime on your Profile page.
+              </p>
               <button
-                type="button"
-                onMouseDown={saveSelection}
-                onClick={() => inlineFileInputRef.current?.click()}
-                disabled={insertingImage}
-                className="flex items-center gap-1 text-xs font-semibold text-[var(--color-ink-dim)] hover:text-[var(--color-ink)] transition-colors disabled:opacity-50"
+                onClick={onClose}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold text-black bg-[var(--color-amber)] hover:brightness-110 active:scale-[0.98] transition-all mt-1"
               >
-                <ImagePlus size={12} />
-                {insertingImage ? "Uploading…" : "Insert Image"}
+                Done
               </button>
-              <input ref={inlineFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleInlineFile} />
             </div>
-            <div
-              ref={bodyRef}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={syncBodyFromEditor}
-              onKeyDown={handleBodyKeyDown}
-              onPaste={handleBodyPaste}
-              onClick={handleBodyClick}
-              data-placeholder="Write the post… use Insert Image to drop a photo between paragraphs"
-              className="post-body-editor w-full min-h-[160px] max-h-[320px] overflow-y-auto px-3 py-2.5 rounded-lg bg-white/[0.06] text-sm text-[var(--color-ink)] outline-none focus:bg-white/[0.09] transition-colors whitespace-pre-wrap"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs text-[var(--color-ink-faint)] mb-1.5 block">
-              Tag a stock (optional) — shows a live mini chart at the top of the post
-            </label>
-            {symbol ? (
-              <div className="inline-flex items-center gap-1.5 bg-white/[0.08] rounded-full pl-3 pr-1.5 py-1">
-                <span className="text-xs font-bold">{symbol}</span>
-                <button
-                  type="button"
-                  onClick={() => setSymbol(null)}
-                  className="w-4 h-4 flex items-center justify-center rounded-full text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
-                >
-                  <X size={11} />
-                </button>
-              </div>
-            ) : (
-              <StockSearch compact onSelect={(s) => setSymbol(s)} />
-            )}
-          </div>
-
-          <div>
-            <label className="text-xs text-[var(--color-ink-faint)] mb-1.5 block">Cover image (optional)</label>
-            {imageUrl ? (
-              <div className="relative">
-                <img src={imageUrl} alt="" className="w-full h-32 object-cover rounded-lg" />
-                <button
-                  type="button"
-                  onClick={() => setImageUrl("")}
-                  className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
-                >
-                  <X size={13} />
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold bg-white/[0.06] text-[var(--color-ink-dim)] hover:bg-white/[0.1] transition-colors disabled:opacity-50"
-                >
-                  <ImagePlus size={14} />
-                  {uploading ? "Uploading…" : "Upload Image"}
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-                <input
-                  type="url"
-                  placeholder="…or paste an image URL"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-xs text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] outline-none focus:bg-white/[0.09] transition-colors"
+          ) : (
+            <form onSubmit={submit} className="flex flex-col gap-5">
+              <input
+                required
+                autoFocus
+                maxLength={140}
+                placeholder="Headline"
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+                className="display-bold w-full bg-transparent text-3xl md:text-4xl leading-tight text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] outline-none pb-3 border-b border-[var(--color-border-soft)] focus:border-[var(--color-amber)]/50 transition-colors"
+              />
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs text-[var(--color-ink-faint)]">Body</label>
+                  <button
+                    type="button"
+                    onMouseDown={saveSelection}
+                    onClick={() => inlineFileInputRef.current?.click()}
+                    disabled={insertingImage}
+                    className="flex items-center gap-1 text-xs font-semibold text-[var(--color-ink-dim)] hover:text-[var(--color-ink)] transition-colors disabled:opacity-50"
+                  >
+                    <ImagePlus size={12} />
+                    {insertingImage ? "Uploading…" : "Insert Image"}
+                  </button>
+                  <input ref={inlineFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleInlineFile} />
+                </div>
+                <div
+                  ref={bodyRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={syncBodyFromEditor}
+                  onKeyDown={handleBodyKeyDown}
+                  onPaste={handleBodyPaste}
+                  onClick={handleBodyClick}
+                  data-placeholder="Write the post… use Insert Image to drop a photo between paragraphs"
+                  className="post-body-editor w-full min-h-[50vh] px-3 py-2.5 rounded-lg bg-white/[0.06] text-base leading-relaxed text-[var(--color-ink)] outline-none focus:bg-white/[0.09] transition-colors whitespace-pre-wrap"
                 />
               </div>
-            )}
-          </div>
 
-          {error && <p className="text-xs text-[var(--color-down)]">{error}</p>}
+              <div>
+                <label className="text-xs text-[var(--color-ink-faint)] mb-1.5 block">
+                  Tag a stock (optional) — shows a live mini chart at the top of the post
+                </label>
+                {symbol ? (
+                  <div className="inline-flex items-center gap-1.5 bg-white/[0.08] rounded-full pl-3 pr-1.5 py-1">
+                    <span className="text-xs font-bold">{symbol}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSymbol(null)}
+                      className="w-4 h-4 flex items-center justify-center rounded-full text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                ) : (
+                  <StockSearch compact onSelect={(s) => setSymbol(s)} />
+                )}
+              </div>
 
-          <button
-            type="submit"
-            disabled={submitting || uploading || insertingImage || !headline.trim() || !body.trim()}
-            className="w-full py-2.5 rounded-lg text-sm font-semibold text-black bg-[var(--color-amber)] hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 mt-1"
-          >
-            {submitting ? "Posting…" : "Post"}
-          </button>
-        </form>
-        )}
+              <div>
+                <label className="text-xs text-[var(--color-ink-faint)] mb-1.5 block">Cover image (optional)</label>
+                {imageUrl ? (
+                  <div className="relative">
+                    <img src={imageUrl} alt="" className="w-full h-48 object-cover rounded-lg" />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold bg-white/[0.06] text-[var(--color-ink-dim)] hover:bg-white/[0.1] transition-colors disabled:opacity-50"
+                    >
+                      <ImagePlus size={14} />
+                      {uploading ? "Uploading…" : "Upload Image"}
+                    </button>
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+                    <input
+                      type="url"
+                      placeholder="…or paste an image URL"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-xs text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] outline-none focus:bg-white/[0.09] transition-colors"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {error && <p className="text-xs text-[var(--color-down)]">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={submitting || uploading || insertingImage || !headline.trim() || !body.trim()}
+                className="w-full py-3 rounded-lg text-sm font-semibold text-black bg-[var(--color-amber)] hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 mt-1"
+              >
+                {submitting ? "Posting…" : "Post"}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
 
       {alignToolbar && (
