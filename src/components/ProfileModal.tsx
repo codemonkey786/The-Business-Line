@@ -122,16 +122,18 @@ export function ProfileModal({
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadingAvatar}
                 title="Change profile picture"
-                className="relative w-11 h-11 shrink-0 rounded-full flex items-center justify-center overflow-hidden group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] focus:ring-[var(--color-amber)]"
-                style={{ background: `${color}22` }}
+                className="relative w-11 h-11 shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] focus:ring-[var(--color-amber)]"
               >
-                {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={20} style={{ color }} />}
+                <span className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center" style={{ background: `${color}22` }}>
+                  {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={20} style={{ color }} />}
+                </span>
+                {/* Always-on corner badge, not hover-only — a photo that already fills the circle gives
+                    no other visual hint that it's editable, which is exactly what made this hard to find. */}
                 <span
-                  className={`absolute inset-0 flex items-center justify-center bg-black/60 transition-opacity ${
-                    uploadingAvatar ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                  }`}
+                  className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center bg-[var(--color-amber)] text-black"
+                  style={{ boxShadow: "0 0 0 2px var(--color-surface)" }}
                 >
-                  {uploadingAvatar ? <RefreshCw size={14} className="animate-spin text-white" /> : <Camera size={14} className="text-white" />}
+                  {uploadingAvatar ? <RefreshCw size={10} className="animate-spin" /> : <Camera size={10} />}
                 </span>
                 <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
               </button>
