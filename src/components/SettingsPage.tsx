@@ -4,7 +4,10 @@ import { bandColorVar, type ScoreBand } from "../lib/creditScore";
 import type { SyncStatus } from "../store/usePortfolio";
 import type { PortfolioState } from "../lib/types";
 
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+// Real photos straight off a phone commonly run 5-10MB — the old 5MB cap was rejecting
+// perfectly normal pictures and reading as a broken upload. 20MB comfortably covers virtually
+// any real photo while still catching a genuinely wrong file picked by mistake.
+const MAX_AVATAR_BYTES = 20 * 1024 * 1024;
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
@@ -161,7 +164,7 @@ export function SettingsPage({
       return;
     }
     if (file.size > MAX_AVATAR_BYTES) {
-      setAvatarError("Image is too large — 5MB max.");
+      setAvatarError("Image is too large — 20MB max.");
       return;
     }
     setAvatarError(null);
