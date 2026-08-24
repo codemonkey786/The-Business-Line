@@ -121,6 +121,24 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
     }
   }
 
+  // Pasting an article from a news site (or anywhere rich-text) hands the browser's default
+  // paste handler that source page's actual HTML — its own fonts, colors, heading sizes, links,
+  // sometimes whole layout chrome — which then renders straight into this dark editor and reads
+  // as "glitching" (invisible black-on-black text, huge headings, broken spacing). Stripping to
+  // plain text and rebuilding only paragraph breaks keeps the words and drops everything else.
+  function handleBodyPaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    if (!text) return;
+    const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = text
+      .split(/\n{2,}/)
+      .map((para) => para.split("\n").map(escape).join("<br>"))
+      .join("<br><br>");
+    document.execCommand("insertHTML", false, html);
+    syncBodyFromEditor();
+  }
+
   function handleBodyKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -231,6 +249,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
               suppressContentEditableWarning
               onInput={syncBodyFromEditor}
               onKeyDown={handleBodyKeyDown}
+              onPaste={handleBodyPaste}
               onClick={handleBodyClick}
               data-placeholder="Write the post… use Insert Image to drop a photo between paragraphs"
               className="post-body-editor w-full min-h-[160px] px-3 py-2.5 rounded-lg bg-white/[0.06] text-sm text-[var(--color-ink)] outline-none focus:bg-white/[0.09] transition-colors whitespace-pre-wrap"
