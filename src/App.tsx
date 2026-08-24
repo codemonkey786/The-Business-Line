@@ -315,7 +315,7 @@ export default function App() {
                 <div className="flex justify-end mt-4">
                   <button
                     onClick={() => setComposerOpen(true)}
-                    className="flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-lg bg-[var(--color-amber)] text-black hover:brightness-110 active:scale-[0.98] transition-all"
+                    className="flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-lg bg-[var(--color-amber)]/15 text-[var(--color-amber)] hover:bg-[var(--color-amber)]/25 transition-colors"
                   >
                     <Newspaper size={13} />
                     New Post
