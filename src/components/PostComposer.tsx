@@ -187,7 +187,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" onClick={onClose}>
-      <div className="board w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
+      <div className="board w-full max-w-md p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-amber)]/15">
@@ -252,7 +252,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
               onPaste={handleBodyPaste}
               onClick={handleBodyClick}
               data-placeholder="Write the post… use Insert Image to drop a photo between paragraphs"
-              className="post-body-editor w-full min-h-[160px] px-3 py-2.5 rounded-lg bg-white/[0.06] text-sm text-[var(--color-ink)] outline-none focus:bg-white/[0.09] transition-colors whitespace-pre-wrap"
+              className="post-body-editor w-full min-h-[160px] max-h-[320px] overflow-y-auto px-3 py-2.5 rounded-lg bg-white/[0.06] text-sm text-[var(--color-ink)] outline-none focus:bg-white/[0.09] transition-colors whitespace-pre-wrap"
             />
           </div>
 
