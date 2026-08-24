@@ -369,6 +369,7 @@ export default function App() {
                 bandColor={bandColorVar(scoreResult.band)}
                 userEmail={displayName || user?.email}
                 userId={user?.id}
+                avatarUrl={avatarUrl}
                 signedIn={Boolean(user)}
                 scoreEntries={leaderboard.entries}
                 scoreEntriesLoading={leaderboard.loading}

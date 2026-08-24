@@ -16,6 +16,7 @@ interface Props {
   bandColor: string;
   userEmail?: string | null;
   userId?: string | null;
+  avatarUrl?: string;
   signedIn?: boolean;
   scoreEntries?: Profile[];
   scoreEntriesLoading?: boolean;
@@ -221,6 +222,7 @@ export function LeaderboardPanel({
   bandColor,
   userEmail,
   userId,
+  avatarUrl,
   signedIn,
   scoreEntries = [],
   scoreEntriesLoading,
@@ -341,10 +343,10 @@ export function LeaderboardPanel({
                 1
               </span>
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shrink-0"
                 style={{ background: `${bandColor}22`, color: bandColor }}
               >
-                <User size={14} />
+                {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={14} />}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold truncate">

@@ -294,7 +294,7 @@ export function PostComposer({ userId, post, onCreate, onUpdate, onClose }: Prop
 
               <div>
                 <label className="text-xs font-semibold text-[var(--color-ink)] mb-1.5 block">
-                  Tag a stock (optional) — shows a live mini chart at the top of the post
+                  Tag a stock. A live mini chart of that stock will show up at the top of your article.
                 </label>
                 {symbol ? (
                   <div className="inline-flex items-center gap-1.5 bg-white/[0.08] border border-[var(--color-border)] rounded-full pl-3 pr-1.5 py-1">
