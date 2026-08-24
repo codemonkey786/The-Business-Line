@@ -27,7 +27,7 @@ export function AdminManager({ profiles, loading, onSetAdmin, onClose }: Props) 
             <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-amber)]/15">
               <Shield size={16} className="text-[var(--color-amber)]" />
             </div>
-            <p className="font-semibold text-[15px]">Manage Admins</p>
+            <p className="font-semibold text-[15px]">Search Users</p>
           </div>
           <button onClick={onClose} className="text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors">
             <X size={18} />
