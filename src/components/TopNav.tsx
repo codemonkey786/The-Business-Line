@@ -1,13 +1,13 @@
-import { Home, Trophy, User } from "lucide-react";
+import { Home, Settings, Trophy, User } from "lucide-react";
 import { StockSearch } from "./StockSearch";
 
-export type NavTab = "overview" | "leaderboard" | "profile";
+export type NavTab = "overview" | "leaderboard" | "profile" | "settings";
 
 interface Props {
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
   onSelectSymbol: (symbol: string) => void;
-  onOpenProfile: () => void;
+  onOpenSettings: () => void;
   scoreColor: string;
   avatarUrl?: string;
 }
@@ -16,9 +16,10 @@ const NAV_LINKS: { label: string; tab: NavTab; icon: typeof Home }[] = [
   { label: "Overview", tab: "overview", icon: Home },
   { label: "Leaderboard", tab: "leaderboard", icon: Trophy },
   { label: "Profile", tab: "profile", icon: User },
+  { label: "Settings", tab: "settings", icon: Settings },
 ];
 
-export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, scoreColor, avatarUrl }: Props) {
+export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenSettings, scoreColor, avatarUrl }: Props) {
   return (
     <header className="h-10 shrink-0 border-b border-[var(--color-border-soft)] flex items-center px-5 gap-6 bg-[var(--color-surface)]">
       <button onClick={() => onTabChange("overview")} title="Home" className="flex items-center gap-2.5 shrink-0 hover:brightness-110 transition-all">
@@ -60,8 +61,8 @@ export function TopNav({ activeTab, onTabChange, onSelectSymbol, onOpenProfile, 
 
       <button
         data-tour="profile"
-        onClick={onOpenProfile}
-        title="Profile"
+        onClick={onOpenSettings}
+        title="Settings"
         className="ml-auto w-7 h-7 shrink-0 rounded-full flex items-center justify-center overflow-hidden hover:brightness-125 hover:bg-white/[0.06] transition-all"
         style={{ color: scoreColor }}
       >

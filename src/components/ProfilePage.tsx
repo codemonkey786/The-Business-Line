@@ -1,181 +1,12 @@
-import { useRef, useState } from "react";
-import { Camera, Check, Clock, Cloud, CloudOff, LogOut, Newspaper, Pencil, RefreshCw, Shield, Trash2, User, X } from "lucide-react";
+import { useState } from "react";
+import { Check, Clock, Newspaper, Pencil, Trash2, X } from "lucide-react";
 import type { ScoreBand } from "../lib/creditScore";
 import { bandColorVar } from "../lib/creditScore";
 import type { CompanyProfile, Post, PortfolioState, PricePoint, Quote } from "../lib/types";
 import type { ScorePoint } from "../lib/scoreHistoryStorage";
-import type { SyncStatus } from "../store/usePortfolio";
 import { ScoreHero } from "./ScoreHero";
 import { PositionsTable } from "./PositionsTable";
 import { ScoreStatsPanel } from "./ScoreStatsPanel";
-
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
-
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-[var(--color-border-soft)] bg-white/[0.02] px-3 py-2.5">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-ink-faint)]">{label}</p>
-      <p className="mono-num text-[15px] leading-tight mt-1">{value}</p>
-    </div>
-  );
-}
-
-// This *is* the account settings surface — avatar, sync status, admin tools, sign out — living
-// right on the Profile page instead of a separate popup, so "go to your Profile" and "go to
-// settings" are the same destination rather than two different places for related things.
-function AccountSettings({
-  band,
-  avatarUrl,
-  onUpdateAvatar,
-  memberSince,
-  distinctSymbols,
-  activeSymbols,
-  userEmail,
-  syncStatus,
-  signedIn,
-  onOpenAuth,
-  isOwner,
-  onOpenAdminManager,
-  onSignOut,
-}: {
-  band: ScoreBand;
-  avatarUrl?: string;
-  onUpdateAvatar?: (file: File) => Promise<void>;
-  memberSince: string;
-  distinctSymbols: number;
-  activeSymbols: number;
-  userEmail?: string;
-  syncStatus: SyncStatus;
-  signedIn: boolean;
-  onOpenAuth?: () => void;
-  isOwner?: boolean;
-  onOpenAdminManager?: () => void;
-  onSignOut?: () => void;
-}) {
-  const color = bandColorVar(band);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [avatarError, setAvatarError] = useState<string | null>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-
-  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !onUpdateAvatar) return;
-    if (!file.type.startsWith("image/")) {
-      setAvatarError("Please choose an image file.");
-      return;
-    }
-    if (file.size > MAX_AVATAR_BYTES) {
-      setAvatarError("Image is too large — 5MB max.");
-      return;
-    }
-    setAvatarError(null);
-    setUploadingAvatar(true);
-    try {
-      await onUpdateAvatar(file);
-    } catch {
-      setAvatarError("Upload failed — try again.");
-    } finally {
-      setUploadingAvatar(false);
-    }
-  }
-
-  return (
-    <div className="board mt-4 p-5">
-      <div className="flex items-center gap-3 mb-4">
-        {onUpdateAvatar ? (
-          <button
-            onClick={() => avatarInputRef.current?.click()}
-            disabled={uploadingAvatar}
-            title="Change profile picture"
-            className="relative w-11 h-11 shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] focus:ring-[var(--color-amber)]"
-          >
-            <span
-              className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
-              style={{ background: `${color}22`, boxShadow: `0 0 0 2px ${color}55, 0 0 14px -2px ${color}90` }}
-            >
-              {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={20} style={{ color }} />}
-            </span>
-            <span
-              className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center bg-[var(--color-amber)] text-black"
-              style={{ boxShadow: "0 0 0 2px var(--color-surface)" }}
-            >
-              {uploadingAvatar ? <RefreshCw size={10} className="animate-spin" /> : <Camera size={10} />}
-            </span>
-            <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-          </button>
-        ) : (
-          <div
-            className="w-11 h-11 shrink-0 rounded-full flex items-center justify-center overflow-hidden"
-            style={{ background: `${color}22`, boxShadow: `0 0 0 2px ${color}55, 0 0 14px -2px ${color}90` }}
-          >
-            {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={20} style={{ color }} />}
-          </div>
-        )}
-        <div>
-          <p className="font-semibold text-[15px]">Account Settings</p>
-          <p className="text-xs text-[var(--color-ink-faint)]">Member since {memberSince}</p>
-        </div>
-      </div>
-      {avatarError && <p className="text-xs text-[var(--color-down)] mb-3">{avatarError}</p>}
-
-      <div className="grid grid-cols-2 gap-2 mb-4">
-        <StatTile label="Stocks Backed" value={String(distinctSymbols)} />
-        <StatTile label="Active Stocks Backed" value={String(activeSymbols)} />
-      </div>
-
-      {signedIn ? (
-        <>
-          {userEmail && (
-            <div className="flex items-center gap-1.5 mb-3 text-[11px] text-[var(--color-ink-faint)]">
-              {syncStatus === "syncing" ? (
-                <>
-                  <RefreshCw size={11} className="animate-spin" /> Syncing…
-                </>
-              ) : syncStatus === "error" ? (
-                <>
-                  <CloudOff size={11} className="text-[var(--color-down)]" /> Sync error
-                </>
-              ) : (
-                <>
-                  <Cloud size={11} /> Synced to your account ({userEmail})
-                </>
-              )}
-            </div>
-          )}
-          {isOwner && onOpenAdminManager && (
-            <button
-              onClick={onOpenAdminManager}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-amber)]/15 text-[var(--color-amber)] hover:bg-[var(--color-amber)]/25 transition-colors mb-2"
-            >
-              <Shield size={14} />
-              Manage Admins
-            </button>
-          )}
-          {onSignOut && (
-            <button
-              onClick={onSignOut}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold bg-white/[0.06] text-[var(--color-ink-dim)] hover:text-[var(--color-ink)] hover:bg-white/[0.1] transition-colors"
-            >
-              <LogOut size={14} />
-              Sign Out
-            </button>
-          )}
-        </>
-      ) : (
-        onOpenAuth && (
-          <button
-            onClick={onOpenAuth}
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold text-black bg-[var(--color-amber)] hover:brightness-110 active:scale-[0.98] transition-all"
-          >
-            <Cloud size={14} />
-            Sign in to sync across devices
-          </button>
-        )
-      )}
-    </div>
-  );
-}
 
 function timeAgo(ms: number): string {
   const diffMs = Date.now() - ms;
@@ -388,14 +219,6 @@ interface Props {
   displayName?: string;
   userEmail?: string;
   onUpdateDisplayName?: (name: string) => Promise<void>;
-  avatarUrl?: string;
-  onUpdateAvatar?: (file: File) => Promise<void>;
-  syncStatus: SyncStatus;
-  signedIn: boolean;
-  onOpenAuth?: () => void;
-  isOwner?: boolean;
-  onOpenAdminManager?: () => void;
-  onSignOut?: () => void;
   portfolio: PortfolioState;
   profiles: Record<string, CompanyProfile>;
   betas: Record<string, number>;
@@ -421,14 +244,6 @@ export function ProfilePage({
   displayName,
   userEmail,
   onUpdateDisplayName,
-  avatarUrl,
-  onUpdateAvatar,
-  syncStatus,
-  signedIn,
-  onOpenAuth,
-  isOwner,
-  onOpenAdminManager,
-  onSignOut,
   portfolio,
   profiles,
   betas,
@@ -439,29 +254,10 @@ export function ProfilePage({
 }: Props) {
   const myPosts = posts.filter((p) => p.authorId === userId);
   const pendingReview = posts.filter((p) => p.status === "pending" && p.authorId !== userId);
-  const distinctSymbols = new Set(portfolio.calls.map((c) => c.symbol)).size;
-  const activeSymbols = portfolio.calls.filter((c) => !c.closedAt).length;
-  const memberSince = new Date(portfolio.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
 
   return (
     <div>
       <ScoreHero score={score} band={band} delta={delta} scoreHistory={scoreHistory} />
-
-      <AccountSettings
-        band={band}
-        avatarUrl={avatarUrl}
-        onUpdateAvatar={onUpdateAvatar}
-        memberSince={memberSince}
-        distinctSymbols={distinctSymbols}
-        activeSymbols={activeSymbols}
-        userEmail={userEmail}
-        syncStatus={syncStatus}
-        signedIn={signedIn}
-        onOpenAuth={onOpenAuth}
-        isOwner={isOwner}
-        onOpenAdminManager={onOpenAdminManager}
-        onSignOut={onSignOut}
-      />
 
       {onUpdateDisplayName && (
         <DisplayNameEditor displayName={displayName} userEmail={userEmail} onUpdateDisplayName={onUpdateDisplayName} />

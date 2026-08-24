@@ -42,6 +42,7 @@ import type { CallDirection, NewsArticle, Post } from "./lib/types";
 // there's no reason to make every visitor download and parse them before first render.
 const LeaderboardPanel = lazy(() => import("./components/LeaderboardPanel").then((m) => ({ default: m.LeaderboardPanel })));
 const ProfilePage = lazy(() => import("./components/ProfilePage").then((m) => ({ default: m.ProfilePage })));
+const SettingsPage = lazy(() => import("./components/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 const PostComposer = lazy(() => import("./components/PostComposer").then((m) => ({ default: m.PostComposer })));
 const AdminManager = lazy(() => import("./components/AdminManager").then((m) => ({ default: m.AdminManager })));
 const ProductTour = lazy(() => import("./components/ProductTour").then((m) => ({ default: m.ProductTour })));
@@ -58,11 +59,11 @@ const TOUR_STEPS: TourStep[] = [
   },
   { selector: "[data-tour='feed']", title: "Your feed", body: "Real market news mixed with posts from The Business Line staff." },
   { selector: "[data-tour='watchlist']", title: "Track stocks", body: "Add symbols here to watch their price and back them Up or Down." },
-  { selector: "[data-tour='profile']", title: "Your account", body: "Manage your display name, sign out, or admin tools from here." },
+  { selector: "[data-tour='profile']", title: "Your account", body: "Your avatar, sync status, admin tools, and sign out live here." },
 ];
 
 export default function App() {
-  const { user, loading: authLoading, signIn, signUp, signInWithGoogle, signOut, updateDisplayName, updateAvatar } = useAuth();
+  const { user, loading: authLoading, signIn, signUp, signInWithGoogle, signOut, updateDisplayName, updateAvatar, updateEmail } = useAuth();
   const userMeta = user?.user_metadata as { display_name?: string; avatar_url?: string } | undefined;
   const displayName = userMeta?.display_name;
   const avatarUrl = userMeta?.avatar_url;
@@ -277,7 +278,7 @@ export default function App() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onSelectSymbol={handleAddSymbol}
-          onOpenProfile={() => handleTabChange("profile")}
+          onOpenSettings={() => handleTabChange("settings")}
           scoreColor={bandColorVar(scoreResult.band)}
           avatarUrl={avatarUrl}
         />
@@ -374,7 +375,7 @@ export default function App() {
                 onViewSymbol={handleViewSymbol}
               />
             </Suspense>
-          ) : (
+          ) : activeTab === "profile" ? (
             <Suspense fallback={TAB_FALLBACK}>
               <ProfilePage
                 score={scoreResult.score}
@@ -392,8 +393,26 @@ export default function App() {
                 displayName={displayName}
                 userEmail={user?.email}
                 onUpdateDisplayName={user ? handleUpdateDisplayName : undefined}
+                portfolio={state}
+                profiles={profiles}
+                betas={betas}
+                winRate={scoreResult.winRate}
+                priceHistory={history}
+                scoreProgressHistory={scoreHistory}
+                scoreProgressDailyHistory={dailyScoreHistory}
+              />
+            </Suspense>
+          ) : (
+            <Suspense fallback={TAB_FALLBACK}>
+              <SettingsPage
+                band={scoreResult.band}
                 avatarUrl={avatarUrl}
                 onUpdateAvatar={user ? handleUpdateAvatar : undefined}
+                portfolio={state}
+                displayName={displayName}
+                onUpdateDisplayName={user ? handleUpdateDisplayName : undefined}
+                userEmail={user?.email}
+                onUpdateEmail={user ? updateEmail : undefined}
                 syncStatus={syncStatus}
                 signedIn={Boolean(user)}
                 onOpenAuth={() => {
@@ -403,13 +422,6 @@ export default function App() {
                 isOwner={isOwner}
                 onOpenAdminManager={() => setAdminManagerOpen(true)}
                 onSignOut={signOut}
-                portfolio={state}
-                profiles={profiles}
-                betas={betas}
-                winRate={scoreResult.winRate}
-                priceHistory={history}
-                scoreProgressHistory={scoreHistory}
-                scoreProgressDailyHistory={dailyScoreHistory}
               />
             </Suspense>
           )}

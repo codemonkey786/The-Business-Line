@@ -69,5 +69,16 @@ export function useAuth() {
     if (data.user) setSession((prev) => (prev ? { ...prev, user: data.user } : prev));
   }
 
-  return { session, user: session?.user ?? null, loading, signUp, signIn, signInWithGoogle, signOut, updateDisplayName, updateAvatar };
+  // Changing your email requires confirming it — Supabase emails a confirmation link to the
+  // new address and the account's real email doesn't change until you click it, same
+  // "check your email" pattern as signing up with confirmation required. Session is left
+  // untouched here on purpose: showing the new address as if it were already active before
+  // it's actually confirmed would be lying about the account's real state.
+  async function updateEmail(email: string) {
+    if (!supabase) throw new Error("Supabase isn't configured yet.");
+    const { error } = await supabase.auth.updateUser({ email });
+    if (error) throw error;
+  }
+
+  return { session, user: session?.user ?? null, loading, signUp, signIn, signInWithGoogle, signOut, updateDisplayName, updateAvatar, updateEmail };
 }
