@@ -89,7 +89,7 @@ function riskAdjustedEdgePct(call: Call, quotes: Record<string, Quote>, betas: R
 // points, risk-adjusted for that same stock's volatility. Nothing else — not win rate, not
 // account age, not how many other stocks you're backing — has any say in it. A call still
 // counts (and keeps moving) while open; closing it just freezes this same number permanently.
-const POINTS_PER_PERCENT_EDGE = 4;
+const POINTS_PER_PERCENT_EDGE = 9;
 
 function pointsForCall(call: Call, quotes: Record<string, Quote>, betas: Record<string, number>): number {
   return riskAdjustedEdgePct(call, quotes, betas) * POINTS_PER_PERCENT_EDGE;
