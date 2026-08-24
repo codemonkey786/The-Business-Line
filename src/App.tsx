@@ -24,6 +24,8 @@ import { useReadingActivity } from "./store/useReadingActivity";
 import { useArticleFeedback } from "./store/useArticleFeedback";
 import { useAdmin } from "./store/useAdmin";
 import { useAdminManagement } from "./store/useAdminManagement";
+import { useLeaderboard } from "./store/useLeaderboard";
+import { useProfileSync } from "./store/useProfileSync";
 import { usePosts } from "./store/usePosts";
 import { ArticleReader } from "./components/ArticleReader";
 import { PostReader } from "./components/PostReader";
@@ -115,6 +117,8 @@ export default function App() {
     () => mergeDailyAndIntradayScoreHistory(dailyScoreHistory, scoreHistory),
     [dailyScoreHistory, scoreHistory]
   );
+  useProfileSync(user?.id, displayName, scoreResult.score);
+  const leaderboard = useLeaderboard(Boolean(user));
 
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(state.watchlist[0] ?? null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -229,6 +233,7 @@ export default function App() {
     setReadingArticle(null);
     setReadingPost(null);
     setActiveTab(tab);
+    if (tab === "leaderboard") leaderboard.refresh();
   }
 
   function openArticle(article: NewsArticle) {
@@ -341,6 +346,10 @@ export default function App() {
                 band={scoreResult.band}
                 bandColor={bandColorVar(scoreResult.band)}
                 userEmail={displayName || user?.email}
+                userId={user?.id}
+                signedIn={Boolean(user)}
+                scoreEntries={leaderboard.entries}
+                scoreEntriesLoading={leaderboard.loading}
                 onViewSymbol={handleViewSymbol}
               />
             </Suspense>

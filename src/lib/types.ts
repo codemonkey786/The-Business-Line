@@ -65,6 +65,8 @@ export interface Profile {
   userId: string;
   email: string;
   isAdmin: boolean;
+  displayName?: string;
+  score?: number;
 }
 
 export type FeedbackValue = "like" | "dislike";

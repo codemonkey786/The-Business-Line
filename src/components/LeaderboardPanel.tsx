@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Newspaper, Trophy, Eye, ListChecks, Gauge, User } from "lucide-react";
 import { CompanyLogo } from "./CompanyLogo";
-import type { CompanyProfile, NewsArticle, Quote } from "../lib/types";
-import { SCORE_BANDS, type ScoreBand } from "../lib/creditScore";
+import type { CompanyProfile, NewsArticle, Profile, Quote } from "../lib/types";
+import { SCORE_BANDS, bandForScore, bandColorVar, type ScoreBand } from "../lib/creditScore";
 
 interface Props {
   articles: NewsArticle[];
@@ -14,6 +14,10 @@ interface Props {
   band: ScoreBand;
   bandColor: string;
   userEmail?: string | null;
+  userId?: string | null;
+  signedIn?: boolean;
+  scoreEntries?: Profile[];
+  scoreEntriesLoading?: boolean;
   onViewSymbol: (symbol: string) => void;
 }
 
@@ -212,11 +216,48 @@ function WatchlistRow({
   );
 }
 
-// Four genuinely-sourced rankings, not a social leaderboard we don't have the backend for:
-// "Top Journalists" counts real bylines from the live news feed, "Top Stocks Viewed" is your
-// own locally-tracked reading activity, "Top Watchlist" ranks your real watchlist by today's
-// live move, and "Top Credit Scores" is honestly just your own score — there's no multi-user
-// account system here to source real other-people rankings from.
+function ScoreRow({ rank, entry, isYou }: { rank: number; entry: Profile; isYou: boolean }) {
+  const color = rankColor(rank - 1);
+  const entryScore = entry.score ?? 0;
+  const entryBand = bandForScore(entryScore);
+  const entryBandColor = bandColorVar(entryBand);
+  const name = entry.displayName || entry.email;
+  return (
+    <div
+      className={`flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border-soft)] last:border-0 ${
+        isYou ? "bg-white/[0.04]" : ""
+      }`}
+    >
+      <span className="mono-num text-sm font-bold w-5 text-center shrink-0" style={{ color }}>
+        {rank}
+      </span>
+      <div
+        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+        style={{ background: `${entryBandColor}22`, color: entryBandColor }}
+      >
+        <User size={14} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold truncate">
+          {name}
+          {isYou && <span className="ml-1.5 text-[10px] font-bold tracking-wide text-[var(--color-amber)]">YOU</span>}
+        </p>
+        <p className="text-xs text-[var(--color-ink-faint)]">{entryBand}</p>
+      </div>
+      <div className="flex items-center gap-2.5 shrink-0">
+        <MiniCreditGauge score={entryScore} />
+        <span className="mono-num text-lg font-bold" style={{ color: entryBandColor }}>
+          {entryScore.toFixed(0)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Four genuinely-sourced rankings: "Top Journalists" counts real bylines from the live news
+// feed, "Top Stocks Viewed" is your own locally-tracked reading activity, "Top Watchlist" ranks
+// your real watchlist by today's live move, and "Top Credit Scores" is a real cross-user ranking
+// pulled from every signed-in user's synced profile row (see useLeaderboard/useProfileSync).
 export function LeaderboardPanel({
   articles,
   readingActivity,
@@ -227,6 +268,10 @@ export function LeaderboardPanel({
   band,
   bandColor,
   userEmail,
+  userId,
+  signedIn,
+  scoreEntries = [],
+  scoreEntriesLoading,
   onViewSymbol,
 }: Props) {
   const journalists = useMemo(() => {
@@ -332,31 +377,40 @@ export function LeaderboardPanel({
             <Gauge size={16} style={{ color: bandColor }} />
             <span className="display-bold text-lg tracking-tight">Top Credit Scores</span>
           </div>
-          <div className="flex items-center gap-3 px-5 py-3">
-            <span className="mono-num text-sm font-bold w-5 text-center shrink-0" style={{ color: rankColor(0) }}>
-              1
-            </span>
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: `${bandColor}22`, color: bandColor }}
-            >
-              <User size={14} />
+          {!signedIn ? (
+            <div className="px-5 py-10 text-center text-sm text-[var(--color-ink-faint)]">
+              Sign in to see how your real score stacks up against other traders.
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold truncate">{userEmail || "You"}</p>
-              <p className="text-xs text-[var(--color-ink-faint)]">{band}</p>
-            </div>
-            <div className="flex items-center gap-2.5 shrink-0">
-              <MiniCreditGauge score={score} />
-              <span className="mono-num text-lg font-bold" style={{ color: bandColor }}>
-                {score.toFixed(0)}
+          ) : scoreEntriesLoading && scoreEntries.length === 0 ? (
+            <div className="px-5 py-10 text-center text-sm text-[var(--color-ink-faint)]">Loading real scores…</div>
+          ) : scoreEntries.length === 0 ? (
+            <div className="flex items-center gap-3 px-5 py-3">
+              <span className="mono-num text-sm font-bold w-5 text-center shrink-0" style={{ color: rankColor(0) }}>
+                1
               </span>
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: `${bandColor}22`, color: bandColor }}
+              >
+                <User size={14} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold truncate">
+                  {userEmail || "You"}
+                  <span className="ml-1.5 text-[10px] font-bold tracking-wide text-[var(--color-amber)]">YOU</span>
+                </p>
+                <p className="text-xs text-[var(--color-ink-faint)]">{band}</p>
+              </div>
+              <div className="flex items-center gap-2.5 shrink-0">
+                <MiniCreditGauge score={score} />
+                <span className="mono-num text-lg font-bold" style={{ color: bandColor }}>
+                  {score.toFixed(0)}
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="px-5 pb-4 pt-1 text-xs text-[var(--color-ink-faint)]">
-            This app doesn't have a multi-user account system yet, so this is honestly just you — no
-            other real scores to rank against.
-          </div>
+          ) : (
+            scoreEntries.map((entry, i) => <ScoreRow key={entry.userId} rank={i + 1} entry={entry} isYou={entry.userId === userId} />)
+          )}
         </div>
       </div>
     </>

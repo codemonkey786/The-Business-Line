@@ -24,7 +24,8 @@ export function useAdmin(user: User | null) {
       if (cancelled) return;
 
       if (!data) {
-        await supabase!.from("profiles").insert({ user_id: user.id, email: user.email ?? "" });
+        const displayName = (user.user_metadata as { display_name?: string } | undefined)?.display_name;
+        await supabase!.from("profiles").insert({ user_id: user.id, email: user.email ?? "", display_name: displayName ?? null });
         if (user.id === OWNER_USER_ID) {
           await supabase!.from("profiles").update({ is_admin: true }).eq("user_id", user.id);
           if (!cancelled) setIsAdminFlag(true);

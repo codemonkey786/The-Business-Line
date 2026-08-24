@@ -95,3 +95,34 @@ create policy "Authors can update their own posts"
   on public.posts for update
   using (auth.uid() = author_id)
   with check (auth.uid() = author_id);
+
+-- Run this once — lets the leaderboard show real display names and credit scores across every
+-- signed-in user, not just you. The profiles table is already readable by anyone signed in
+-- (see "Anyone signed in can read profiles" above); this just adds the columns and lets each
+-- user keep their own row's name/score current.
+alter table public.profiles add column if not exists display_name text;
+alter table public.profiles add column if not exists score numeric;
+
+-- Users can update their own display_name/score. This is deliberately a *second*, additive
+-- policy (Postgres OR's permissive policies together) rather than a replacement for the
+-- owner-only one above — the trigger below is what actually stops a non-owner from sneaking an
+-- is_admin change through this same policy.
+create policy "Users can update their own profile"
+  on public.profiles for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create or replace function public.protect_is_admin()
+returns trigger as $$
+begin
+  if new.is_admin is distinct from old.is_admin and auth.uid() <> 'ecb6cf68-a5e8-4eeb-a752-7d472a2e0c0a' then
+    new.is_admin := old.is_admin;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+drop trigger if exists protect_is_admin_trigger on public.profiles;
+create trigger protect_is_admin_trigger
+  before update on public.profiles
+  for each row execute function public.protect_is_admin();
