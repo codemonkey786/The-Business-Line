@@ -4,7 +4,9 @@ import { hasSupabaseConfig } from "../lib/supabase";
 
 interface Props {
   onSignIn: (email: string, password: string) => Promise<void>;
-  onSignUp: (email: string, password: string) => Promise<void>;
+  // Resolves true when the account was signed in immediately (no email confirmation required
+  // by the project's Auth settings) — false means a real confirmation email actually went out.
+  onSignUp: (email: string, password: string) => Promise<boolean>;
   onSignInWithGoogle: () => Promise<void>;
   onClose: () => void;
   // When true, this gates the whole app — no X button, no backdrop-click dismiss, since
@@ -90,8 +92,8 @@ export function AuthModal({ onSignIn, onSignUp, onSignInWithGoogle, onClose, req
     setSubmitting(true);
     try {
       if (mode === "signUp") {
-        await onSignUp(email, password);
-        setConfirmSent(true);
+        const signedInImmediately = await onSignUp(email, password);
+        if (!signedInImmediately) setConfirmSent(true);
       } else {
         await onSignIn(email, password);
       }

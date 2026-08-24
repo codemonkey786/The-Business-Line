@@ -21,10 +21,14 @@ export function useAuth() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Returns whether that signup logged you straight in (true) or actually needs email
+  // confirmation first (false) — driven entirely by the project's Auth settings, not anything
+  // client-side, so this reflects reality instead of always assuming confirmation is required.
   async function signUp(email: string, password: string) {
     if (!supabase) throw new Error("Supabase isn't configured yet.");
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
+    return Boolean(data.session);
   }
 
   async function signIn(email: string, password: string) {

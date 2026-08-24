@@ -482,7 +482,11 @@ export default function App() {
             await signIn(email, password);
             setAuthOpen(false);
           }}
-          onSignUp={signUp}
+          onSignUp={async (email, password) => {
+            const signedInImmediately = await signUp(email, password);
+            if (signedInImmediately) setAuthOpen(false);
+            return signedInImmediately;
+          }}
           onSignInWithGoogle={signInWithGoogle}
           onClose={() => setAuthOpen(false)}
         />
