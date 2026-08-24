@@ -52,7 +52,7 @@ export function ArticleReader({ article, feedback, onSetFeedback, likeCount, dis
         />
       )}
 
-      {article.summary && <p className="text-[15px] text-[var(--color-ink-dim)] leading-relaxed whitespace-pre-wrap">{article.summary}</p>}
+      {article.summary && <p className="text-[15px] text-[var(--color-ink)] leading-relaxed whitespace-pre-wrap">{article.summary}</p>}
 
       <div className="flex items-center justify-between gap-4 mt-6 pt-6 border-t border-[var(--color-border-soft)]">
         <ArticleFeedbackButtons

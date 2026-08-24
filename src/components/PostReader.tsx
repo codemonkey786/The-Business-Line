@@ -98,7 +98,7 @@ export function PostReader({ post, quote, history, onBack }: Props) {
             }}
           />
         ) : (
-          <p key={i} className="text-[15px] text-[var(--color-ink-dim)] leading-relaxed whitespace-pre-wrap mb-4 last:mb-0">
+          <p key={i} className="text-[15px] text-[var(--color-ink)] leading-relaxed whitespace-pre-wrap mb-4 last:mb-0">
             {block.text}
           </p>
         )
