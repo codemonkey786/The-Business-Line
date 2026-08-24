@@ -114,7 +114,11 @@ function volatilityScalarFor(marketVolatility: number): number {
   return Math.max(0.65, Math.min(1.6, 0.7 + marketVolatility * 0.36));
 }
 
-// Factor 1: Track Record (35%) — win rate on closed calls, breakeven "pushes" excluded
+// Factor 1: Track Record (35%) — win rate on closed calls, breakeven "pushes" excluded.
+// "No closed calls yet" genuinely means no evidence either way, so it's scored at the same
+// neutral 50 every other factor uses for "nothing to go on" — not a plausible-looking number
+// that happens to sit above center, which would silently tilt the whole score upward before
+// you've done anything.
 function trackRecordFactor(calls: Call[]): ScoreFactor {
   const closed = calls.filter((c) => c.closedAt);
   if (closed.length === 0) {
@@ -122,7 +126,7 @@ function trackRecordFactor(calls: Call[]): ScoreFactor {
       key: "track_record",
       label: "Track Record",
       weight: 0.35,
-      value: 68,
+      value: 50,
       blurb: "No closed calls yet — starting from a neutral baseline.",
     };
   }
@@ -132,7 +136,7 @@ function trackRecordFactor(calls: Call[]): ScoreFactor {
       key: "track_record",
       label: "Track Record",
       weight: 0.35,
-      value: 68,
+      value: 50,
       blurb: `${closed.length} closed call${closed.length === 1 ? "" : "s"} landed at breakeven — starting from a neutral baseline.`,
     };
   }
@@ -181,7 +185,7 @@ function currentAccuracyFactor(calls: Call[], quotes: Record<string, Quote>, bet
 // pushing this factor up in real time rather than only paying off once you close it.
 //
 // Both sub-scores are blended from a neutral 50 (not 0), same as every other factor's "no data
-// yet" baseline (Track Record starts at 68, Current Accuracy at 50) — a brand new account with
+// yet" baseline (Track Record and Current Accuracy both start at 50) — a brand new account with
 // a freshly opened call has genuinely done nothing wrong yet, so it shouldn't score as if it had.
 // Without this, opening your very first call cliffs this factor from "unused" straight to 0,
 // which alone was worth ~45+ score points — directly contradicting the intent documented on
@@ -307,7 +311,13 @@ export function computeCreditScore(
   const volatilityScalar = volatilityScalarFor(marketVolatility);
   const blended = clamp(50 + (weightedBlend - 50) * volatilityScalar);
 
-  const rawScore = 300 + (blended / 100) * 550;
+  // blended=50 ("everything neutral, no signal either way") has to land exactly on 600 — the
+  // same flat score a brand-new 0-call account starts at above — or the score visibly jumps the
+  // instant you place your first call even with flat performance, just from the math's own
+  // center (previously 575) not matching the promised starting point. A single linear 300-850
+  // mapping can't hit both endpoints and put 600 at the midpoint (50), so this kinks at (50, 600)
+  // instead: same 300/850 floor and ceiling, but neutral genuinely means "unchanged."
+  const rawScore = blended <= 50 ? 300 + (blended / 50) * 300 : 600 + ((blended - 50) / 50) * 250;
   const score = Math.round(rawScore * 100) / 100;
 
   const closed = state.calls.filter((c) => c.closedAt);
