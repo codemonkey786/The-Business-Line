@@ -7,7 +7,6 @@ import { WatchlistPanel } from "./components/WatchlistPanel";
 import { SymbolDetailCard } from "./components/SymbolDetailCard";
 import { NewsTicker } from "./components/NewsTicker";
 import { MosaicFeed } from "./components/MosaicFeed";
-import { ProfileModal } from "./components/ProfileModal";
 import { AuthModal } from "./components/AuthModal";
 import type { TourStep } from "./components/ProductTour";
 import { usePortfolio } from "./store/usePortfolio";
@@ -134,7 +133,6 @@ export default function App() {
 
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(state.watchlist[0] ?? null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<NavTab>("overview");
@@ -279,7 +277,7 @@ export default function App() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onSelectSymbol={handleAddSymbol}
-          onOpenProfile={() => setProfileOpen(true)}
+          onOpenProfile={() => handleTabChange("profile")}
           scoreColor={bandColorVar(scoreResult.band)}
           avatarUrl={avatarUrl}
         />
@@ -394,6 +392,17 @@ export default function App() {
                 displayName={displayName}
                 userEmail={user?.email}
                 onUpdateDisplayName={user ? handleUpdateDisplayName : undefined}
+                avatarUrl={avatarUrl}
+                onUpdateAvatar={user ? handleUpdateAvatar : undefined}
+                syncStatus={syncStatus}
+                signedIn={Boolean(user)}
+                onOpenAuth={() => {
+                  setAuthMessage(undefined);
+                  setAuthOpen(true);
+                }}
+                isOwner={isOwner}
+                onOpenAdminManager={() => setAdminManagerOpen(true)}
+                onSignOut={signOut}
                 portfolio={state}
                 profiles={profiles}
                 betas={betas}
@@ -453,36 +462,6 @@ export default function App() {
       </div>
 
       <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} />
-
-      {profileOpen && (
-        <ProfileModal
-          score={scoreResult.score}
-          band={scoreResult.band}
-          winRate={scoreResult.winRate}
-          calls={state.calls}
-          createdAt={state.createdAt}
-          user={user}
-          avatarUrl={avatarUrl}
-          syncStatus={syncStatus}
-          onUpdateDisplayName={handleUpdateDisplayName}
-          onUpdateAvatar={handleUpdateAvatar}
-          onSignOut={() => {
-            signOut();
-            setProfileOpen(false);
-          }}
-          onOpenAuth={() => {
-            setProfileOpen(false);
-            setAuthMessage(undefined);
-            setAuthOpen(true);
-          }}
-          onClose={() => setProfileOpen(false)}
-          isOwner={isOwner}
-          onOpenAdminManager={() => {
-            setProfileOpen(false);
-            setAdminManagerOpen(true);
-          }}
-        />
-      )}
 
       {adminManagerOpen && (
         <Suspense fallback={null}>
