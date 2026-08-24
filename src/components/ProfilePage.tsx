@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Check, Clock, Newspaper, Pencil, Trash2, X } from "lucide-react";
-import type { ScoreBand, ScoreFactor } from "../lib/creditScore";
+import type { ScoreBand } from "../lib/creditScore";
 import { bandColorVar } from "../lib/creditScore";
 import type { CompanyProfile, Post, PortfolioState, PricePoint, Quote } from "../lib/types";
 import type { ScorePoint } from "../lib/scoreHistoryStorage";
 import { ScoreHero } from "./ScoreHero";
 import { PositionsTable } from "./PositionsTable";
 import { ScoreStatsPanel } from "./ScoreStatsPanel";
-import { ScoreFactorsPanel } from "./ScoreFactorsPanel";
 
 function timeAgo(ms: number): string {
   const diffMs = Date.now() - ms;
@@ -215,7 +214,6 @@ interface Props {
   priceHistory: Record<string, PricePoint[]>;
   scoreProgressHistory: ScorePoint[];
   scoreProgressDailyHistory: ScorePoint[];
-  factors: ScoreFactor[];
 }
 
 export function ProfilePage({
@@ -240,7 +238,6 @@ export function ProfilePage({
   priceHistory,
   scoreProgressHistory,
   scoreProgressDailyHistory,
-  factors,
 }: Props) {
   const myPosts = posts.filter((p) => p.authorId === userId);
   const pendingReview = posts.filter((p) => p.status === "pending" && p.authorId !== userId);
@@ -256,7 +253,6 @@ export function ProfilePage({
       <PositionsTable state={portfolio} quotes={quotes} profiles={profiles} betas={betas} winRate={winRate} status="open" history={priceHistory} />
       <PositionsTable state={portfolio} quotes={quotes} profiles={profiles} betas={betas} winRate={winRate} status="closed" />
       <ScoreStatsPanel history={scoreProgressHistory} dailyHistory={scoreProgressDailyHistory} bandColor={bandColorVar(band)} />
-      <ScoreFactorsPanel factors={factors} />
 
       {isAdmin ? (
         <>

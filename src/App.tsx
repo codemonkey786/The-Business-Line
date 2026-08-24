@@ -389,7 +389,6 @@ export default function App() {
                 priceHistory={history}
                 scoreProgressHistory={scoreHistory}
                 scoreProgressDailyHistory={dailyScoreHistory}
-                factors={scoreResult.factors}
               />
             </Suspense>
           )}
