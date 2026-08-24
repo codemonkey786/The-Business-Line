@@ -157,3 +157,7 @@ create policy "Users can delete their own avatar"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Run this once — lets a post carry its own "Sources & Credits" text (source links, image
+-- credit, etc.), shown at the bottom of the published article.
+alter table public.posts add column if not exists credits text;

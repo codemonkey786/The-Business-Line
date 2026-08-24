@@ -28,3 +28,13 @@ export function parsePostBody(body: string): PostContentBlock[] {
   if (rest) blocks.push({ type: "text", text: rest });
   return blocks;
 }
+
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+
+// Splits a line of credits/sources text into plain-text and URL segments so the reader can
+// render real, clickable links — kept as pure string data (no JSX) so this stays usable outside
+// a React file; the actual <a> rendering happens where it's displayed.
+export function splitTextAndUrls(text: string): { text: string; isUrl: boolean }[] {
+  const parts = text.split(URL_PATTERN);
+  return parts.filter((p) => p.length > 0).map((p) => ({ text: p, isUrl: p.startsWith("http://") || p.startsWith("https://") }));
+}

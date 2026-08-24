@@ -1,7 +1,7 @@
 import { ArrowLeft, Clock } from "lucide-react";
 import type { Post, PricePoint, Quote } from "../lib/types";
 import { PriceChart } from "./PriceChart";
-import { parsePostBody } from "../lib/postContent";
+import { parsePostBody, splitTextAndUrls } from "../lib/postContent";
 
 function timeAgo(ms: number): string {
   const diffMs = Date.now() - ms;
@@ -104,6 +104,37 @@ export function PostReader({ post, quote, history, onBack }: Props) {
         )
       )}
       <div className="clear-both" />
+
+      {post.credits && (
+        <div className="mt-8 pt-5 border-t border-[var(--color-border-soft)]">
+          <p className="term-label text-[10px] tracking-widest text-[var(--color-ink-faint)] mb-2">Sources &amp; Credits</p>
+          <div className="flex flex-col gap-1">
+            {post.credits
+              .split("\n")
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line, i) => (
+                <p key={i} className="text-xs text-[var(--color-ink-faint)] leading-relaxed">
+                  {splitTextAndUrls(line).map((seg, j) =>
+                    seg.isUrl ? (
+                      <a
+                        key={j}
+                        href={seg.text}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[var(--color-amber)] hover:underline break-all"
+                      >
+                        {seg.text}
+                      </a>
+                    ) : (
+                      <span key={j}>{seg.text}</span>
+                    )
+                  )}
+                </p>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

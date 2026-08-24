@@ -83,6 +83,7 @@ export interface Post {
   body: string;
   imageUrl?: string;
   symbol?: string;
+  credits?: string;
   status: PostStatus;
   createdAt: number;
 }

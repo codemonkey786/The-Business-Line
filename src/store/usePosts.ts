@@ -12,6 +12,7 @@ function fromRow(row: {
   body: string;
   image_url: string | null;
   symbol: string | null;
+  credits: string | null;
   status: string;
   created_at: string;
 }): Post {
@@ -23,12 +24,13 @@ function fromRow(row: {
     body: row.body,
     imageUrl: row.image_url ?? undefined,
     symbol: row.symbol ?? undefined,
+    credits: row.credits ?? undefined,
     status: row.status === "pending" ? "pending" : "published",
     createdAt: new Date(row.created_at).getTime(),
   };
 }
 
-const COLUMNS = "id, author_id, author_name, headline, body, image_url, symbol, status, created_at";
+const COLUMNS = "id, author_id, author_name, headline, body, image_url, symbol, credits, status, created_at";
 
 // Admin-authored posts, shown in the feed alongside real market news — real user-generated
 // content, not fabricated headlines, so it comes straight from the posts table with no local
@@ -54,7 +56,7 @@ export function usePosts(user: User | null) {
   }, [refresh]);
 
   const createPost = useCallback(
-    async (headline: string, body: string, imageUrl?: string, symbol?: string): Promise<Post> => {
+    async (headline: string, body: string, imageUrl?: string, symbol?: string, credits?: string): Promise<Post> => {
       if (!supabase || !user) throw new Error("Not signed in.");
       const authorName = (user.user_metadata as { display_name?: string } | undefined)?.display_name || user.email || "Staff";
       // A post with flagged language never goes straight to the public feed — it's held as
@@ -69,6 +71,7 @@ export function usePosts(user: User | null) {
           body,
           image_url: imageUrl || null,
           symbol: symbol || null,
+          credits: credits || null,
           status,
         })
         .select(COLUMNS)

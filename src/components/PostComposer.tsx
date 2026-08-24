@@ -7,7 +7,7 @@ import type { Post } from "../lib/types";
 
 interface Props {
   userId: string;
-  onCreate: (headline: string, body: string, imageUrl?: string, symbol?: string) => Promise<Post>;
+  onCreate: (headline: string, body: string, imageUrl?: string, symbol?: string, credits?: string) => Promise<Post>;
   onClose: () => void;
 }
 
@@ -23,6 +23,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
   const [body, setBody] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [symbol, setSymbol] = useState<string | null>(null);
+  const [credits, setCredits] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -172,7 +173,7 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
     setError(null);
     setSubmitting(true);
     try {
-      const created = await onCreate(headline.trim(), body.trim(), imageUrl.trim() || undefined, symbol ?? undefined);
+      const created = await onCreate(headline.trim(), body.trim(), imageUrl.trim() || undefined, symbol ?? undefined, credits.trim() || undefined);
       if (created.status === "pending") {
         setPending(true);
       } else {
@@ -311,6 +312,19 @@ export function PostComposer({ userId, onCreate, onClose }: Props) {
                     />
                   </div>
                 )}
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[var(--color-ink)] mb-1.5 block">
+                  Sources &amp; Credits (optional) — shown at the bottom of the article
+                </label>
+                <textarea
+                  value={credits}
+                  onChange={(e) => setCredits(e.target.value)}
+                  rows={3}
+                  placeholder={"Source: Reuters — https://reuters.com\nImage: NASA / Getty Images"}
+                  className="w-full px-3 py-2.5 rounded-lg bg-white/[0.06] border border-[var(--color-border)] text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-dim)] outline-none focus:bg-white/[0.09] focus:border-[var(--color-amber)]/50 transition-colors resize-none"
+                />
               </div>
 
               {error && <p className="text-xs text-[var(--color-down)]">{error}</p>}
