@@ -161,3 +161,36 @@ create policy "Users can delete their own avatar"
 -- Run this once — lets a post carry its own "Sources & Credits" text (source links, image
 -- credit, etc.), shown at the bottom of the published article.
 alter table public.posts add column if not exists credits text;
+
+-- Run this once — real, shared like/dislike on staff posts (same shape as the article_feedback
+-- table that already exists for external news, just keyed by the post's uuid).
+create table if not exists public.post_feedback (
+  post_id uuid not null references public.posts (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  value text not null check (value in ('like', 'dislike')),
+  updated_at timestamptz not null default now(),
+  primary key (post_id, user_id)
+);
+
+alter table public.post_feedback enable row level security;
+
+create policy "Anyone signed in can read post feedback"
+  on public.post_feedback for select
+  to authenticated
+  using (true);
+
+create policy "Users can set their own post feedback"
+  on public.post_feedback for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own post feedback"
+  on public.post_feedback for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "Users can delete their own post feedback"
+  on public.post_feedback for delete
+  to authenticated
+  using (auth.uid() = user_id);

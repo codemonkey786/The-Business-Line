@@ -1,7 +1,8 @@
 import { ArrowLeft, Clock } from "lucide-react";
-import type { Post, PricePoint, Quote } from "../lib/types";
+import type { FeedbackValue, Post, PricePoint, Quote } from "../lib/types";
 import { PriceChart } from "./PriceChart";
 import { parsePostBody, splitTextAndUrls } from "../lib/postContent";
+import { PostFeedbackButtons } from "./MosaicFeed";
 
 function timeAgo(ms: number): string {
   const diffMs = Date.now() - ms;
@@ -18,6 +19,10 @@ interface Props {
   post: Post;
   quote?: Quote;
   history: PricePoint[];
+  feedback?: FeedbackValue;
+  onSetFeedback?: (postId: string, value: FeedbackValue) => void;
+  likeCount?: number;
+  dislikeCount?: number;
   onBack: () => void;
 }
 
@@ -25,7 +30,7 @@ interface Props {
 // no external link needed, unlike real third-party news. Just title, then text, on the page
 // itself rather than boxed in a card. Deleting your own post lives on the Profile page, not
 // buried in the reading view.
-export function PostReader({ post, quote, history, onBack }: Props) {
+export function PostReader({ post, quote, history, feedback, onSetFeedback, likeCount, dislikeCount, onBack }: Props) {
   return (
     <div className="max-w-2xl mx-auto">
       <button
@@ -104,6 +109,10 @@ export function PostReader({ post, quote, history, onBack }: Props) {
         )
       )}
       <div className="clear-both" />
+
+      <div className="flex items-center gap-4 mt-6 pt-6 border-t border-[var(--color-border-soft)]">
+        <PostFeedbackButtons postId={post.id} value={feedback} onSetFeedback={onSetFeedback} likeCount={likeCount} dislikeCount={dislikeCount} />
+      </div>
 
       {post.credits && (
         <div className="mt-8 pt-5 border-t border-[var(--color-border-soft)]">

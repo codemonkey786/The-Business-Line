@@ -72,6 +72,7 @@ export interface Profile {
 
 export type FeedbackValue = "like" | "dislike";
 export type ArticleFeedback = Record<number, FeedbackValue>;
+export type PostFeedback = Record<string, FeedbackValue>;
 
 export type PostStatus = "published" | "pending";
 

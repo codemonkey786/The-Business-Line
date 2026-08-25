@@ -1,7 +1,60 @@
+import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { ArticleCompactTile, ArticleHeroTile, ArticleSideTile, ArticleMeta, ArticleFeedbackButtons } from "./ArticleList";
 import { CompanyLogo } from "./CompanyLogo";
 import { PriceChart } from "./PriceChart";
-import type { ArticleFeedback, CompanyProfile, FeedbackValue, NewsArticle, Post, PricePoint, Quote } from "../lib/types";
+import type { ArticleFeedback, CompanyProfile, FeedbackValue, NewsArticle, Post, PostFeedback, PricePoint, Quote } from "../lib/types";
+
+interface PostFeedbackProps {
+  postId: string;
+  value?: FeedbackValue;
+  onSetFeedback?: (postId: string, value: FeedbackValue) => void;
+  likeCount?: number;
+  dislikeCount?: number;
+  light?: boolean;
+}
+
+// Same control as ArticleFeedbackButtons, keyed by the post's uuid instead of a numeric
+// article id — staff posts get real, shared like/dislike too, not just external news.
+export function PostFeedbackButtons({ postId, value, onSetFeedback, likeCount, dislikeCount, light }: PostFeedbackProps) {
+  if (!onSetFeedback) return null;
+  const base = "w-6 h-6 flex items-center justify-center rounded-full transition-colors shrink-0";
+  const idle = light ? "bg-white/15 text-white/80 hover:bg-white/25 hover:text-white" : "bg-white/[0.06] text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]";
+  const countClass = `mono-num text-[10px] font-bold ${light ? "text-white/70" : "text-[var(--color-ink-faint)]"}`;
+  const showLikeCount = (likeCount ?? 0) > 0;
+  const showDislikeCount = value !== "dislike" && (dislikeCount ?? 0) > 0;
+  return (
+    <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.preventDefault()}>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSetFeedback(postId, "like");
+          }}
+          title="Like"
+          className={`${base} ${value === "like" ? "bg-[var(--color-up)] text-[#04150a]" : idle}`}
+        >
+          <ThumbsUp size={12} />
+        </button>
+        {showLikeCount && <span className={countClass}>{likeCount}</span>}
+      </div>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSetFeedback(postId, "dislike");
+          }}
+          title="Dislike"
+          className={`${base} ${value === "dislike" ? "bg-[var(--color-down)] text-[#1a0303]" : idle}`}
+        >
+          <ThumbsDown size={12} />
+        </button>
+        {showDislikeCount && <span className={countClass}>{dislikeCount}</span>}
+      </div>
+    </div>
+  );
+}
 
 interface StockTileProps {
   symbol: string;
@@ -126,11 +179,28 @@ function timeAgo(ms: number): string {
 // Staff posts get their own tile shapes (same slots as article tiles: hero/side/compact/tail)
 // so they can genuinely take a hero article's place in the feed, not just live in a separate
 // section — the more posts exist, the more of the feed they naturally occupy.
-function PostHeroTile({ post, onOpen }: { post: Post; onOpen: (post: Post) => void }) {
+interface PostTileFeedbackProps {
+  feedback?: FeedbackValue;
+  onSetFeedback?: (postId: string, value: FeedbackValue) => void;
+  likeCount?: number;
+  dislikeCount?: number;
+}
+
+function PostHeroTile({
+  post,
+  onOpen,
+  feedback,
+  onSetFeedback,
+  likeCount,
+  dislikeCount,
+}: { post: Post; onOpen: (post: Post) => void } & PostTileFeedbackProps) {
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onOpen(post)}
-      className="group relative rounded-2xl overflow-hidden bg-[var(--color-surface-2)] block w-full h-full min-h-[280px] text-left"
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen(post)}
+      className="group relative rounded-2xl overflow-hidden bg-[var(--color-surface-2)] block w-full h-full min-h-[280px] text-left cursor-pointer"
     >
       {post.imageUrl && (
         <img
@@ -150,16 +220,39 @@ function PostHeroTile({ post, onOpen }: { post: Post; onOpen: (post: Post) => vo
           <span className="text-[11px] text-white/70">
             {post.authorName} · {timeAgo(post.createdAt)}
           </span>
-          {post.symbol && <span className="ticker-pill">{post.symbol}</span>}
+          <div className="flex items-center gap-2 shrink-0">
+            {post.symbol && <span className="ticker-pill">{post.symbol}</span>}
+            <PostFeedbackButtons
+              postId={post.id}
+              value={feedback}
+              onSetFeedback={onSetFeedback}
+              likeCount={likeCount}
+              dislikeCount={dislikeCount}
+              light
+            />
+          </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
-function PostSideTile({ post, onOpen }: { post: Post; onOpen: (post: Post) => void }) {
+function PostSideTile({
+  post,
+  onOpen,
+  feedback,
+  onSetFeedback,
+  likeCount,
+  dislikeCount,
+}: { post: Post; onOpen: (post: Post) => void } & PostTileFeedbackProps) {
   return (
-    <button onClick={() => onOpen(post)} className="group flex gap-3 p-3 rounded-xl hover:bg-white/[0.04] transition-colors w-full text-left">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(post)}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen(post)}
+      className="group flex gap-3 p-3 rounded-xl hover:bg-white/[0.04] transition-colors w-full text-left cursor-pointer"
+    >
       <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-[var(--color-surface-2)]">
         {post.imageUrl && (
           <img
@@ -176,19 +269,35 @@ function PostSideTile({ post, onOpen }: { post: Post; onOpen: (post: Post) => vo
       </div>
       <div className="min-w-0 flex flex-col justify-center">
         <p className="text-sm font-bold leading-snug line-clamp-3">{post.headline}</p>
-        <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-[var(--color-ink-faint)]">
-          <span className="font-bold text-[var(--color-amber)]">The Business Line</span>
-          <span>·</span>
-          <span>{timeAgo(post.createdAt)}</span>
+        <div className="flex items-center justify-between gap-3 mt-1.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-ink-faint)]">
+            <span className="font-bold text-[var(--color-amber)]">The Business Line</span>
+            <span>·</span>
+            <span>{timeAgo(post.createdAt)}</span>
+          </div>
+          <PostFeedbackButtons postId={post.id} value={feedback} onSetFeedback={onSetFeedback} likeCount={likeCount} dislikeCount={dislikeCount} />
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
-function PostCompactTile({ post, onOpen }: { post: Post; onOpen: (post: Post) => void }) {
+function PostCompactTile({
+  post,
+  onOpen,
+  feedback,
+  onSetFeedback,
+  likeCount,
+  dislikeCount,
+}: { post: Post; onOpen: (post: Post) => void } & PostTileFeedbackProps) {
   return (
-    <button onClick={() => onOpen(post)} className="group block rounded-xl overflow-hidden bg-[var(--color-surface-2)] w-full text-left">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(post)}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen(post)}
+      className="group block rounded-xl overflow-hidden bg-[var(--color-surface-2)] w-full text-left cursor-pointer"
+    >
       <div className="h-28 overflow-hidden bg-[var(--color-surface-2)]">
         {post.imageUrl && (
           <img
@@ -206,11 +315,14 @@ function PostCompactTile({ post, onOpen }: { post: Post; onOpen: (post: Post) =>
       <div className="p-3">
         {post.symbol && <span className="ticker-pill mb-1.5 inline-block">{post.symbol}</span>}
         <p className="text-[13px] font-bold leading-snug line-clamp-2">{post.headline}</p>
-        <p className="text-[11px] text-[var(--color-ink-faint)] mt-1.5">
-          <span className="font-bold text-[var(--color-amber)]">The Business Line</span> · {timeAgo(post.createdAt)}
-        </p>
+        <div className="flex items-center justify-between gap-2 mt-1.5">
+          <p className="text-[11px] text-[var(--color-ink-faint)]">
+            <span className="font-bold text-[var(--color-amber)]">The Business Line</span> · {timeAgo(post.createdAt)}
+          </p>
+          <PostFeedbackButtons postId={post.id} value={feedback} onSetFeedback={onSetFeedback} likeCount={likeCount} dislikeCount={dislikeCount} />
+        </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -232,6 +344,10 @@ interface Props {
   onSetArticleFeedback?: (articleId: number, value: FeedbackValue) => void;
   articleLikeCounts?: Record<number, number>;
   articleDislikeCounts?: Record<number, number>;
+  postFeedback?: PostFeedback;
+  onSetPostFeedback?: (postId: string, value: FeedbackValue) => void;
+  postLikeCounts?: Record<string, number>;
+  postDislikeCounts?: Record<string, number>;
 }
 
 // A single mosaic grid genuinely mixing stock tiles, real news, and staff posts — not
@@ -254,6 +370,10 @@ export function MosaicFeed({
   onSetArticleFeedback,
   articleLikeCounts,
   articleDislikeCounts,
+  postFeedback,
+  onSetPostFeedback,
+  postLikeCounts,
+  postDislikeCounts,
 }: Props) {
   const feedItems: FeedItem[] = [
     ...posts.map((post): FeedItem => ({ kind: "post", post })),
@@ -302,7 +422,14 @@ export function MosaicFeed({
                   onOpen={onOpenArticle}
                 />
               ) : (
-                <PostHeroTile post={hero.post} onOpen={onOpenPost} />
+                <PostHeroTile
+                  post={hero.post}
+                  onOpen={onOpenPost}
+                  feedback={postFeedback?.[hero.post.id]}
+                  onSetFeedback={onSetPostFeedback}
+                  likeCount={postLikeCounts?.[hero.post.id]}
+                  dislikeCount={postDislikeCounts?.[hero.post.id]}
+                />
               )}
             </div>
             <div className="flex flex-col divide-y divide-[var(--color-border-soft)]">
@@ -329,7 +456,15 @@ export function MosaicFeed({
                     onOpen={onOpenArticle}
                   />
                 ) : (
-                  <PostSideTile key={`post-${item.post.id}`} post={item.post} onOpen={onOpenPost} />
+                  <PostSideTile
+                    key={`post-${item.post.id}`}
+                    post={item.post}
+                    onOpen={onOpenPost}
+                    feedback={postFeedback?.[item.post.id]}
+                    onSetFeedback={onSetPostFeedback}
+                    likeCount={postLikeCounts?.[item.post.id]}
+                    dislikeCount={postDislikeCounts?.[item.post.id]}
+                  />
                 )
               )}
             </div>
@@ -360,7 +495,15 @@ export function MosaicFeed({
                   onOpen={onOpenArticle}
                 />
               ) : (
-                <PostCompactTile key={`post-${item.post.id}`} post={item.post} onOpen={onOpenPost} />
+                <PostCompactTile
+                  key={`post-${item.post.id}`}
+                  post={item.post}
+                  onOpen={onOpenPost}
+                  feedback={postFeedback?.[item.post.id]}
+                  onSetFeedback={onSetPostFeedback}
+                  likeCount={postLikeCounts?.[item.post.id]}
+                  dislikeCount={postDislikeCounts?.[item.post.id]}
+                />
               )
             )}
           </div>
@@ -419,18 +562,30 @@ export function MosaicFeed({
                     </div>
                   </div>
                 ) : (
-                  <button
+                  <div
                     key={`post-${item.post.id}`}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onOpenPost(item.post)}
-                    className="text-left px-2 py-4 border-b border-[var(--color-border-soft)] last:border-0 hover:bg-white/[0.03] transition-colors"
+                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpenPost(item.post)}
+                    className="text-left px-2 py-4 border-b border-[var(--color-border-soft)] last:border-0 hover:bg-white/[0.03] transition-colors cursor-pointer"
                   >
                     <p className="text-sm font-semibold leading-snug line-clamp-2">{item.post.headline}</p>
-                    <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-[var(--color-ink-faint)]">
-                      <span className="font-bold text-[var(--color-amber)]">The Business Line</span>
-                      <span>·</span>
-                      <span>{timeAgo(item.post.createdAt)}</span>
+                    <div className="flex items-center justify-between gap-3 mt-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-ink-faint)]">
+                        <span className="font-bold text-[var(--color-amber)]">The Business Line</span>
+                        <span>·</span>
+                        <span>{timeAgo(item.post.createdAt)}</span>
+                      </div>
+                      <PostFeedbackButtons
+                        postId={item.post.id}
+                        value={postFeedback?.[item.post.id]}
+                        onSetFeedback={onSetPostFeedback}
+                        likeCount={postLikeCounts?.[item.post.id]}
+                        dislikeCount={postDislikeCounts?.[item.post.id]}
+                      />
                     </div>
-                  </button>
+                  </div>
                 )
               )}
             </div>

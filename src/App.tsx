@@ -21,6 +21,7 @@ import { useScoreDelta } from "./store/useScoreDelta";
 import { useScoreHistory } from "./store/useScoreHistory";
 import { useReadingActivity } from "./store/useReadingActivity";
 import { useArticleFeedback } from "./store/useArticleFeedback";
+import { usePostFeedback } from "./store/usePostFeedback";
 import { useAdmin } from "./store/useAdmin";
 import { useAdminManagement } from "./store/useAdminManagement";
 import { useLeaderboard } from "./store/useLeaderboard";
@@ -191,6 +192,12 @@ export default function App() {
     dislikeCounts: articleDislikeCounts,
     setFeedback: setArticleFeedback,
   } = useArticleFeedback(user);
+  const {
+    feedback: postFeedback,
+    likeCounts: postLikeCounts,
+    dislikeCounts: postDislikeCounts,
+    setFeedback: setPostFeedback,
+  } = usePostFeedback(user);
 
   // Viewing a stock (clicking its row anywhere) just selects it into the detail panel — and
   // counts as one real, honest "read" of that symbol for the leaderboard. Gated behind an
@@ -299,6 +306,10 @@ export default function App() {
               post={readingPost}
               quote={readingPost.symbol ? quotes[readingPost.symbol] : undefined}
               history={readingPost.symbol ? history[readingPost.symbol] ?? [] : []}
+              feedback={postFeedback?.[readingPost.id]}
+              onSetFeedback={setPostFeedback}
+              likeCount={postLikeCounts?.[readingPost.id]}
+              dislikeCount={postDislikeCounts?.[readingPost.id]}
               onBack={() => setReadingPost(null)}
             />
           ) : activeTab === "overview" ? (
@@ -338,6 +349,10 @@ export default function App() {
                 onSetArticleFeedback={setArticleFeedback}
                 articleLikeCounts={articleLikeCounts}
                 articleDislikeCounts={articleDislikeCounts}
+                postFeedback={postFeedback}
+                onSetPostFeedback={setPostFeedback}
+                postLikeCounts={postLikeCounts}
+                postDislikeCounts={postDislikeCounts}
               />
             </>
           ) : activeTab === "leaderboard" ? (
