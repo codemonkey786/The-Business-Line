@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { Newspaper, Trophy, Eye, Gauge, User, Crown } from "lucide-react";
-import { CompanyLogo } from "./CompanyLogo";
+import { Newspaper, Trophy, Gauge, User, Crown } from "lucide-react";
 import { MiniCreditGauge } from "./MiniCreditGauge";
 import { PollPanel } from "./PollPanel";
 import type { CompanyProfile, DailyPoll, NewsArticle, Profile } from "../lib/types";
@@ -8,7 +7,6 @@ import { bandForScore, bandColorVar } from "../lib/creditScore";
 
 interface Props {
   articles: NewsArticle[];
-  readingActivity: Record<string, number>;
   profiles: Record<string, CompanyProfile>;
   score: number;
   bandColor: string;
@@ -19,7 +17,6 @@ interface Props {
   isOwner?: boolean;
   scoreEntries?: Profile[];
   scoreEntriesLoading?: boolean;
-  onViewSymbol: (symbol: string) => void;
   poll: DailyPoll | null;
   pollVoteCounts: number[];
   myPollVote: number | null;
@@ -90,47 +87,6 @@ function PublicationRow({ rank, source, count, max }: { rank: number; source: st
       </div>
       <span className="mono-num text-sm font-bold text-[var(--color-ink-dim)] shrink-0">{count}</span>
     </div>
-  );
-}
-
-function ReaderRow({
-  rank,
-  symbol,
-  count,
-  max,
-  profile,
-  onClick,
-}: {
-  rank: number;
-  symbol: string;
-  count: number;
-  max: number;
-  profile?: CompanyProfile;
-  onClick: () => void;
-}) {
-  const color = rankColor(rank - 1);
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border-soft)] last:border-0 hover:bg-white/[0.03] transition-colors text-left w-full"
-    >
-      <span className="mono-num text-sm font-bold w-5 text-center shrink-0" style={{ color }}>
-        {rank}
-      </span>
-      <CompanyLogo symbol={symbol} logoUrl={profile?.logo} size={28} />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold truncate">{profile?.name || symbol}</p>
-        <div className="h-1.5 rounded-full bg-white/[0.06] mt-1.5 overflow-hidden">
-          <div
-            className="h-full rounded-full"
-            style={{ width: `${Math.max(6, (count / max) * 100)}%`, background: "var(--color-up)" }}
-          />
-        </div>
-      </div>
-      <span className="mono-num text-sm font-bold text-[var(--color-ink-dim)] shrink-0">
-        {count} view{count === 1 ? "" : "s"}
-      </span>
-    </button>
   );
 }
 
@@ -214,13 +170,11 @@ function ScoreRow({ rank, entry, isYou }: { rank: number; entry: Profile; isYou:
   );
 }
 
-// Three genuinely-sourced rankings: "Best Publications" counts real bylines from the live news
-// feed, "Top Stocks Viewed" is your own locally-tracked reading activity, and "Top Credit
-// Scores" is a real cross-user ranking pulled from every signed-in user's synced profile row
-// (see useLeaderboard/useProfileSync).
+// Two genuinely-sourced rankings: "Best Publications" counts real bylines from the live news
+// feed, and "Top Credit Scores" is a real cross-user ranking pulled from every signed-in user's
+// synced profile row (see useLeaderboard/useProfileSync).
 export function LeaderboardPanel({
   articles,
-  readingActivity,
   profiles,
   score,
   bandColor,
@@ -231,7 +185,6 @@ export function LeaderboardPanel({
   isOwner,
   scoreEntries = [],
   scoreEntriesLoading,
-  onViewSymbol,
   poll,
   pollVoteCounts,
   myPollVote,
@@ -247,13 +200,7 @@ export function LeaderboardPanel({
     return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
   }, [articles]);
 
-  const readers = useMemo(
-    () => Object.entries(readingActivity).sort((a, b) => b[1] - a[1]).slice(0, 10),
-    [readingActivity]
-  );
-
   const maxPublication = publications[0]?.[1] ?? 1;
-  const maxReader = readers[0]?.[1] ?? 1;
 
   return (
     <>
@@ -290,32 +237,7 @@ export function LeaderboardPanel({
           )}
         </div>
 
-        <div className="board overflow-hidden" style={{ boxShadow: "0 0 40px -28px var(--color-up)" }}>
-          <div className="h-[3px] w-full" style={{ background: "linear-gradient(90deg, var(--color-up), transparent)" }} />
-          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[var(--color-border)]">
-            <Eye size={16} style={{ color: "var(--color-up)" }} />
-            <span className="display-bold text-lg tracking-tight">Top Stocks Viewed</span>
-          </div>
-          {readers.length === 0 ? (
-            <div className="px-5 py-10 text-center text-sm text-[var(--color-ink-faint)]">
-              Browse some stocks to build your reading leaderboard — every symbol you open counts.
-            </div>
-          ) : (
-            readers.map(([symbol, count], i) => (
-              <ReaderRow
-                key={symbol}
-                rank={i + 1}
-                symbol={symbol}
-                count={count}
-                max={maxReader}
-                profile={profiles[symbol]}
-                onClick={() => onViewSymbol(symbol)}
-              />
-            ))
-          )}
-        </div>
-
-        <div className="board overflow-hidden md:col-span-2" style={{ boxShadow: `0 0 40px -28px ${bandColor}` }}>
+        <div className="board overflow-hidden" style={{ boxShadow: `0 0 40px -28px ${bandColor}` }}>
           <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, ${bandColor}, transparent)` }} />
           <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[var(--color-border)]">
             <Gauge size={16} style={{ color: bandColor }} />

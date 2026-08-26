@@ -361,7 +361,6 @@ export default function App() {
             <Suspense fallback={TAB_FALLBACK}>
               <LeaderboardPanel
                 articles={marketNews}
-                readingActivity={readingActivity}
                 profiles={profiles}
                 score={scoreResult.score}
                 bandColor={bandColorVar(scoreResult.band)}
@@ -372,7 +371,6 @@ export default function App() {
                 isOwner={isOwner}
                 scoreEntries={leaderboard.entries}
                 scoreEntriesLoading={leaderboard.loading}
-                onViewSymbol={handleViewSymbol}
                 poll={poll}
                 pollVoteCounts={pollVoteCounts}
                 myPollVote={myPollVote}
