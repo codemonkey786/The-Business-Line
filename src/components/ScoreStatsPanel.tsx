@@ -173,9 +173,6 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
   const color = positive ? "var(--color-up)" : "var(--color-down)";
   const lastPoint = points[points.length - 1];
   const hovered = hoverIndex != null ? points[hoverIndex] : null;
-  const periodDelta = points.length > 1 ? points[points.length - 1].score - points[0].score : 0;
-  const periodPct = points.length > 1 && points[0].score !== 0 ? (periodDelta / points[0].score) * 100 : 0;
-  const displayed = hovered ?? lastPoint;
 
   function handleMove(e: React.MouseEvent<SVGSVGElement>) {
     if (!svgRef.current || points.length === 0) return;
@@ -203,21 +200,6 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
       ? new Date(t).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" })
       : new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 
-  // A real date range instead of exposing the raw sample count — "1D · 1,036 samples" is an
-  // implementation detail, not something a viewer of the chart needs to know.
-  const rangeSpan = (() => {
-    if (points.length < 2) return "";
-    const start = points[0].t;
-    const end = points[points.length - 1].t;
-    if (RANGE_CONFIG[range].source === "intraday") {
-      const sameDay = new Date(start).toDateString() === new Date(end).toDateString();
-      return sameDay
-        ? new Date(start).toLocaleDateString(undefined, { month: "short", day: "numeric" })
-        : `${new Date(start).toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${new Date(end).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
-    }
-    return `${new Date(start).toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${new Date(end).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
-  })();
-
   const rangeToggle = (
     <div className="flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5">
       {RANGE_ORDER.map((r) => (
@@ -240,39 +222,16 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
   return (
     <div className="board mt-4 overflow-hidden" style={points.length > 0 ? { boxShadow: `0 0 40px -20px ${color}66` } : undefined}>
       <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, ${color}, transparent)` }} />
-      <div className="flex items-center justify-between px-6 pt-5 gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="term-label text-[11px] tracking-widest" style={{ color: bandColor }}>
-              SCORE PROGRESSION
+      <div className="flex items-center justify-between px-6 pt-5 pb-1 gap-4">
+        <div className="flex items-center gap-2">
+          <span className="term-label text-[11px] tracking-widest" style={{ color: bandColor }}>
+            SCORE PROGRESSION
+          </span>
+          {points.length > 0 && !hovered && (
+            <span className="flex items-center gap-1.5 mono-num text-[9px] font-bold tracking-wider shrink-0" style={{ color }}>
+              <span className="live-dot" style={{ background: color }} />
+              LIVE
             </span>
-            {points.length > 0 && !hovered && (
-              <span className="flex items-center gap-1.5 mono-num text-[9px] font-bold tracking-wider shrink-0" style={{ color }}>
-                <span className="live-dot" style={{ background: color }} />
-                LIVE
-              </span>
-            )}
-          </div>
-          {points.length > 0 && displayed ? (
-            <>
-              <div className="flex items-baseline gap-2">
-                <span className="display-bold text-[28px] leading-none tracking-tight text-[var(--color-ink)]">
-                  {displayed.score.toFixed(2)}
-                </span>
-                {!hovered && (
-                  <span className="mono-num text-[12px] font-bold flex items-center gap-1" style={{ color }}>
-                    {periodDelta >= 0 ? "+" : ""}
-                    {periodDelta.toFixed(2)} ({periodDelta >= 0 ? "+" : ""}
-                    {periodPct.toFixed(2)}%)
-                  </span>
-                )}
-              </div>
-              <p className="mono-num text-[11px] text-[var(--color-ink-faint)] mt-1">
-                {hovered ? formatHoverLabel(hovered.t) : rangeSpan}
-              </p>
-            </>
-          ) : (
-            <div className="h-[44px]" />
           )}
         </div>
         {rangeToggle}
