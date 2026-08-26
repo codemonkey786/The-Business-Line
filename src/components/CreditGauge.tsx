@@ -51,9 +51,12 @@ interface Props {
   band: ScoreBand;
   delta?: number;
   scoreHistory?: ScorePoint[];
+  // When true, this sits directly above another board (the score history chart on Profile) and
+  // should read as one continuous panel rather than two stacked cards with a gap between them.
+  merged?: boolean;
 }
 
-export function CreditGauge({ score, band, delta, scoreHistory = [] }: Props) {
+export function CreditGauge({ score, band, delta, scoreHistory = [], merged = false }: Props) {
   const percentile = percentileForScore(score);
   const needleAngle = 180 - scorePct(score) * 180;
   const color = bandColor(band);
@@ -80,7 +83,10 @@ export function CreditGauge({ score, band, delta, scoreHistory = [] }: Props) {
     <div
       data-tour="score"
       className="board p-6 flex flex-col items-center"
-      style={{ boxShadow: `0 0 60px -6px ${color}66, 0 0 120px -20px ${color}40, inset 0 0 80px -30px ${color}33` }}
+      style={{
+        boxShadow: `0 0 60px -6px ${color}66, 0 0 120px -20px ${color}40, inset 0 0 80px -30px ${color}33`,
+        ...(merged ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomWidth: 0 } : undefined),
+      }}
     >
       <svg viewBox={`0 0 ${SIZE_W} ${SIZE_H}`} className="w-full max-w-[640px] overflow-visible">
         {SCORE_BANDS.map((b, i) => {

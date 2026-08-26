@@ -5,6 +5,10 @@ interface Props {
   history: ScorePoint[];
   dailyHistory: ScorePoint[];
   bandColor?: string;
+  // When true, sits directly under another board (the gauge on Profile) that already handles
+  // the top edge — this panel drops its own top margin/border/radius/accent bar so the two read
+  // as one continuous panel instead of two stacked cards.
+  merged?: boolean;
 }
 
 type Range = "1D" | "1W" | "1M" | "3M" | "1Y" | "ALL";
@@ -71,7 +75,7 @@ function niceTimeStep(spanMs: number, targetCount: number): number {
 }
 
 
-export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--color-score-starter)" }: Props) {
+export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--color-score-starter)", merged = false }: Props) {
   const [range, setRange] = useState<Range>("1D");
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -220,8 +224,18 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
   );
 
   return (
-    <div className="board mt-4 overflow-hidden" style={points.length > 0 ? { boxShadow: `0 0 40px -20px ${color}66` } : undefined}>
-      <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, ${color}, transparent)` }} />
+    <div
+      className={`board overflow-hidden ${merged ? "" : "mt-4"}`}
+      style={{
+        ...(points.length > 0 ? { boxShadow: `0 0 40px -20px ${color}66` } : undefined),
+        ...(merged ? { borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTopWidth: 0 } : undefined),
+      }}
+    >
+      {merged ? (
+        <div className="border-t border-[var(--color-border-soft)]" />
+      ) : (
+        <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, ${color}, transparent)` }} />
+      )}
       <div className="flex items-center justify-between px-6 pt-5 pb-1 gap-4">
         <div className="flex items-center gap-2">
           <span className="term-label text-[11px] tracking-widest" style={{ color: bandColor }}>

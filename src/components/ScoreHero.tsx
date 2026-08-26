@@ -7,8 +7,9 @@ interface Props {
   band: ScoreBand;
   delta?: number;
   scoreHistory?: ScorePoint[];
+  merged?: boolean;
 }
 
-export function ScoreHero({ score, band, delta, scoreHistory }: Props) {
-  return <CreditGauge score={score} band={band} delta={delta} scoreHistory={scoreHistory} />;
+export function ScoreHero({ score, band, delta, scoreHistory, merged }: Props) {
+  return <CreditGauge score={score} band={band} delta={delta} scoreHistory={scoreHistory} merged={merged} />;
 }

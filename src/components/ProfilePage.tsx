@@ -257,8 +257,8 @@ export function ProfilePage({
 
   return (
     <div>
-      <ScoreHero score={score} band={band} delta={delta} scoreHistory={scoreHistory} />
-      <ScoreStatsPanel history={scoreProgressHistory} dailyHistory={scoreProgressDailyHistory} bandColor={bandColorVar(band)} />
+      <ScoreHero score={score} band={band} delta={delta} scoreHistory={scoreHistory} merged />
+      <ScoreStatsPanel history={scoreProgressHistory} dailyHistory={scoreProgressDailyHistory} bandColor={bandColorVar(band)} merged />
 
       {onUpdateDisplayName && (
         <DisplayNameEditor displayName={displayName} userEmail={userEmail} onUpdateDisplayName={onUpdateDisplayName} />
