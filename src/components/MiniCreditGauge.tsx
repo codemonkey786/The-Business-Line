@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { SCORE_BANDS } from "../lib/creditScore";
 
 const SCORE_MIN = 300;
@@ -13,6 +14,15 @@ interface Props {
 }
 
 export function MiniCreditGauge({ score, size = 56, glow = false }: Props) {
+  // Rests at the floor on first paint, then animates up to the real score a frame later — so
+  // every mount (including a full page reload) reads as the needle sweeping into place, using
+  // the same transition that already drives it moving between live scores.
+  const [displayScore, setDisplayScore] = useState(SCORE_MIN);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setDisplayScore(score));
+    return () => cancelAnimationFrame(id);
+  }, [score]);
+
   const w = size;
   const h = size / 2 + 6;
   const cx = w / 2;
@@ -30,7 +40,7 @@ export function MiniCreditGauge({ score, size = 56, glow = false }: Props) {
     return `M ${cx} ${cy} L ${a.x} ${a.y} A ${r} ${r} 0 0 1 ${b.x} ${b.y} Z`;
   }
 
-  const pct = Math.max(0, Math.min(1, (score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN)));
+  const pct = Math.max(0, Math.min(1, (displayScore - SCORE_MIN) / (SCORE_MAX - SCORE_MIN)));
   const needleAngle = 180 - pct * 180;
   const needleTip = polar(r - 3, needleAngle);
 

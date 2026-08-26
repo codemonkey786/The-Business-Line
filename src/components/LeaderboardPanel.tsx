@@ -136,7 +136,7 @@ function ScoreRow({ rank, entry, isYou }: { rank: number; entry: Profile; isYou:
         </span>
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        <MiniCreditGauge score={entryScore} size={leader ? 64 : 58} glow />
+        <MiniCreditGauge score={entryScore} size={leader ? 92 : 80} glow />
         <span
           className={`mono-num font-bold ${leader ? "text-2xl" : "text-xl"}`}
           style={{ color: "var(--color-amber)", textShadow: "0 0 18px var(--color-amber-dim), 0 0 40px rgba(255,176,62,0.25)" }}
