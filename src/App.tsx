@@ -425,6 +425,15 @@ export default function App() {
               />
             </Suspense>
           )}
+
+          <div className="mt-10 pt-5 border-t border-[var(--color-border-soft)] text-center">
+            <p className="text-xs text-[var(--color-ink-faint)]">
+              Questions? Email{" "}
+              <a href="mailto:izaynumlani@westminster.net" className="text-[var(--color-amber)] hover:underline">
+                izaynumlani@westminster.net
+              </a>
+            </p>
+          </div>
         </main>
       </div>
 
