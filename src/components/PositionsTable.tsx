@@ -123,7 +123,9 @@ function Row({
           {edge == null ? "—" : `${positive ? "+" : ""}${edge.toFixed(2)}%`}
         </p>
         {rawChange != null && call.direction === "DOWN" && Math.abs(rawChange) > 0.005 && (
-          <p className="text-[11px] font-semibold text-[var(--color-ink-faint)]">stock {rawPositive ? "rose" : "fell"}</p>
+          <p className="text-[11px] font-semibold text-[var(--color-ink-faint)]">
+            stock {rawPositive ? "rose" : "fell"} {Math.abs(rawChange).toFixed(2)}%
+          </p>
         )}
       </td>
       <td
