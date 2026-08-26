@@ -143,11 +143,11 @@ export function PriceChart({ data, dailyData = [], positive, height = 120, showR
     <div>
       <div className="flex items-center justify-between mb-1.5 gap-2 min-h-[16px]">
         {hovered ? (
-          <span className="mono-num text-[11px] text-[var(--color-ink-dim)]">
+          <span className="mono-num text-[11px] text-[var(--color-ink-dim)] whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
             <span className="font-semibold text-[var(--color-ink)]">${hovered.price.toFixed(2)}</span> · {formatLabel(hovered.t)}
           </span>
         ) : (
-          <span className="mono-num text-[11px] text-[var(--color-ink-faint)]">
+          <span className="mono-num text-[11px] text-[var(--color-ink-faint)] whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
             {formatLabel(windowed[0].t)} &ndash; {formatLabel(windowed[windowed.length - 1].t)}
           </span>
         )}
