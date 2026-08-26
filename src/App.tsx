@@ -22,6 +22,7 @@ import { useScoreHistory } from "./store/useScoreHistory";
 import { useReadingActivity } from "./store/useReadingActivity";
 import { useArticleFeedback } from "./store/useArticleFeedback";
 import { usePostFeedback } from "./store/usePostFeedback";
+import { useDailyPoll } from "./store/useDailyPoll";
 import { useAdmin } from "./store/useAdmin";
 import { useAdminManagement } from "./store/useAdminManagement";
 import { useLeaderboard } from "./store/useLeaderboard";
@@ -198,6 +199,7 @@ export default function App() {
     dislikeCounts: postDislikeCounts,
     setFeedback: setPostFeedback,
   } = usePostFeedback(user);
+  const { poll, voteCounts: pollVoteCounts, myVote: myPollVote, vote: votePoll, createPoll } = useDailyPoll(user);
 
   // Viewing a stock (clicking its row anywhere) just selects it into the detail panel — and
   // counts as one real, honest "read" of that symbol for the leaderboard. Gated behind an
@@ -358,6 +360,7 @@ export default function App() {
           ) : activeTab === "leaderboard" ? (
             <Suspense fallback={TAB_FALLBACK}>
               <LeaderboardPanel
+                articles={marketNews}
                 readingActivity={readingActivity}
                 profiles={profiles}
                 score={scoreResult.score}
@@ -366,9 +369,15 @@ export default function App() {
                 userId={user?.id}
                 avatarUrl={avatarUrl}
                 signedIn={Boolean(user)}
+                isOwner={isOwner}
                 scoreEntries={leaderboard.entries}
                 scoreEntriesLoading={leaderboard.loading}
                 onViewSymbol={handleViewSymbol}
+                poll={poll}
+                pollVoteCounts={pollVoteCounts}
+                myPollVote={myPollVote}
+                onVotePoll={votePoll}
+                onCreatePoll={createPoll}
               />
             </Suspense>
           ) : activeTab === "profile" ? (

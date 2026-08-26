@@ -194,3 +194,57 @@ create policy "Users can delete their own post feedback"
   on public.post_feedback for delete
   to authenticated
   using (auth.uid() = user_id);
+
+-- Run this once — the owner's one daily "which stock will do X" poll. Only the owner account
+-- can publish a poll (mirrors the same hardcoded-uuid check used for posts/admin grants
+-- elsewhere in this file); any signed-in user can read it and cast one vote each.
+create table if not exists public.daily_polls (
+  id uuid primary key default gen_random_uuid(),
+  question text not null,
+  options jsonb not null,
+  created_by uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.daily_polls enable row level security;
+
+create policy "Anyone signed in can read polls"
+  on public.daily_polls for select
+  to authenticated
+  using (true);
+
+create policy "Only the owner can post a poll"
+  on public.daily_polls for insert
+  to authenticated
+  with check (auth.uid() = 'ecb6cf68-a5e8-4eeb-a752-7d472a2e0c0a' and auth.uid() = created_by);
+
+create policy "Only the owner can delete a poll"
+  on public.daily_polls for delete
+  to authenticated
+  using (auth.uid() = 'ecb6cf68-a5e8-4eeb-a752-7d472a2e0c0a');
+
+create table if not exists public.poll_votes (
+  poll_id uuid not null references public.daily_polls (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  option_index int not null,
+  voted_at timestamptz not null default now(),
+  primary key (poll_id, user_id)
+);
+
+alter table public.poll_votes enable row level security;
+
+create policy "Anyone signed in can read poll votes"
+  on public.poll_votes for select
+  to authenticated
+  using (true);
+
+create policy "Users can cast their own vote"
+  on public.poll_votes for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+create policy "Users can change their own vote"
+  on public.poll_votes for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

@@ -88,3 +88,13 @@ export interface Post {
   status: PostStatus;
   createdAt: number;
 }
+
+// The owner's one daily "which stock will do X" poll — options are just tickers, resolved to
+// real names/logos client-side via the same company-profile cache everything else uses.
+export interface DailyPoll {
+  id: string;
+  question: string;
+  options: string[];
+  createdBy: string;
+  createdAt: number;
+}
