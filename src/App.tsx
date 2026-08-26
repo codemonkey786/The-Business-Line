@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
 import { TopNav, MobileTabBar, type NavTab } from "./components/TopNav";
 import { ApiKeyNotice } from "./components/ApiKeyNotice";
@@ -50,6 +50,7 @@ const AdminManager = lazy(() => import("./components/AdminManager").then((m) => 
 const ProductTour = lazy(() => import("./components/ProductTour").then((m) => ({ default: m.ProductTour })));
 
 const TAB_FALLBACK = <div className="text-sm text-[var(--color-ink-faint)] py-10 text-center">Loading…</div>;
+const VALID_TABS: NavTab[] = ["overview", "leaderboard", "profile", "settings"];
 
 const TOUR_STEPS: TourStep[] = [
   { selector: "[data-tour='search']", title: "Search the market", body: "Look up any S&P 500, Nasdaq 100, or Dow 30 stock and jump straight to it." },
@@ -134,11 +135,18 @@ export default function App() {
   useProfileSync(user?.id, displayName, avatarUrl, scoreResult.score);
   const leaderboard = useLeaderboard(Boolean(user));
 
+  const mainRef = useRef<HTMLElement>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(state.watchlist[0] ?? null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState<NavTab>("overview");
+  const [activeTab, setActiveTab] = useState<NavTab>(() => {
+    const saved = localStorage.getItem("creditfolio.activeTab.v1") as NavTab | null;
+    return saved && VALID_TABS.includes(saved) ? saved : "overview";
+  });
+  useEffect(() => {
+    localStorage.setItem("creditfolio.activeTab.v1", activeTab);
+  }, [activeTab]);
   const [tourOpen, setTourOpen] = useState(false);
 
   // A one-time walkthrough, shown right after a real sign-in — not for guests, and not again
@@ -253,6 +261,7 @@ export default function App() {
     setReadingArticle(null);
     setReadingPost(null);
     setActiveTab(tab);
+    mainRef.current?.scrollTo({ top: 0 });
     if (tab === "leaderboard") leaderboard.refresh();
   }
 
@@ -293,7 +302,7 @@ export default function App() {
         />
         {!hasApiKey() && <ApiKeyNotice />}
 
-        <main className="flex-1 overflow-y-auto px-4 md:px-6 py-6">
+        <main ref={mainRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-6">
           {readingArticle ? (
             <ArticleReader
               article={readingArticle}
