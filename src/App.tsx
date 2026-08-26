@@ -358,13 +358,9 @@ export default function App() {
           ) : activeTab === "leaderboard" ? (
             <Suspense fallback={TAB_FALLBACK}>
               <LeaderboardPanel
-                articles={marketNews}
                 readingActivity={readingActivity}
                 profiles={profiles}
-                watchlist={state.watchlist}
-                quotes={quotes}
                 score={scoreResult.score}
-                band={scoreResult.band}
                 bandColor={bandColorVar(scoreResult.band)}
                 userEmail={displayName || user?.email}
                 userId={user?.id}
