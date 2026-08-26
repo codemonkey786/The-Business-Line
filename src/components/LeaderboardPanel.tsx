@@ -23,7 +23,7 @@ interface Props {
   onViewSymbol: (symbol: string) => void;
 }
 
-const RANK_COLORS = ["#ffd54a", "#c9c9d4", "#d2895a", "var(--color-ink-faint)"];
+const RANK_COLORS = ["var(--color-amber)", "#c9c9d4", "#d2895a", "var(--color-ink-faint)"];
 
 function rankColor(i: number) {
   return RANK_COLORS[Math.min(i, 3)];
