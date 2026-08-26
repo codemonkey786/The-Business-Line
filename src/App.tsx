@@ -186,7 +186,7 @@ export default function App() {
     () => filterNewsByStaffActivity(marketNewsRaw, publishedPosts.length),
     [marketNewsRaw, publishedPosts.length]
   );
-  const { activity: readingActivity, recordView } = useReadingActivity();
+  const { recordView } = useReadingActivity();
   const {
     feedback: articleFeedback,
     likeCounts: articleLikeCounts,
