@@ -360,7 +360,7 @@ export default function App() {
           ) : activeTab === "leaderboard" ? (
             <Suspense fallback={TAB_FALLBACK}>
               <LeaderboardPanel
-                articles={marketNews}
+                posts={publishedPosts}
                 profiles={profiles}
                 score={scoreResult.score}
                 bandColor={bandColorVar(scoreResult.band)}

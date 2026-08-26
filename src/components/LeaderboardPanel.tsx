@@ -1,12 +1,12 @@
-import { useMemo, useState } from "react";
-import { Newspaper, Trophy, Gauge, User, Crown } from "lucide-react";
+import { useMemo } from "react";
+import { Trophy, Gauge, User, Crown } from "lucide-react";
 import { MiniCreditGauge } from "./MiniCreditGauge";
 import { PollPanel } from "./PollPanel";
-import type { CompanyProfile, DailyPoll, NewsArticle, Profile } from "../lib/types";
+import type { CompanyProfile, DailyPoll, Post, Profile } from "../lib/types";
 import { bandForScore, bandColorVar } from "../lib/creditScore";
 
 interface Props {
-  articles: NewsArticle[];
+  posts: Post[];
   profiles: Record<string, CompanyProfile>;
   score: number;
   bandColor: string;
@@ -30,54 +30,30 @@ function rankColor(i: number) {
   return RANK_COLORS[Math.min(i, 3)];
 }
 
-// Real domains for each outlet's actual favicon — fetched live from Google's favicon service
-// (the genuine icon from the outlet's own site), not a fabricated logo.
-const SOURCE_DOMAINS: Record<string, string> = {
-  Reuters: "reuters.com",
-  CNBC: "cnbc.com",
-  CoinDesk: "coindesk.com",
-  Cointelegraph: "cointelegraph.com",
-  "Cryptocurrency News": "cryptocurrencynews.com",
-  GlobeNewswire: "globenewswire.com",
-  BusinessWire: "businesswire.com",
-  Forexlive: "forexlive.com",
-};
-
-function SourceLogo({ source }: { source: string }) {
-  const domain = SOURCE_DOMAINS[source];
-  const [failed, setFailed] = useState(false);
-  if (domain && !failed) {
-    return (
-      <img
-        src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
-        alt={source}
-        loading="lazy"
-        decoding="async"
-        onError={() => setFailed(true)}
-        className="w-8 h-8 rounded-lg object-contain bg-white p-1.5 shrink-0"
-      />
-    );
-  }
-  return (
-    <div
-      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-      style={{ background: "var(--color-amber-dim)", color: "var(--color-amber)" }}
-    >
-      <Newspaper size={14} />
-    </div>
-  );
-}
-
-function PublicationRow({ rank, source, count, max }: { rank: number; source: string; count: number; max: number }) {
+function AuthorRow({
+  rank,
+  name,
+  avatarUrl,
+  count,
+  max,
+}: {
+  rank: number;
+  name: string;
+  avatarUrl?: string;
+  count: number;
+  max: number;
+}) {
   const color = rankColor(rank - 1);
   return (
     <div className="flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border-soft)] last:border-0">
       <span className="mono-num text-sm font-bold w-5 text-center shrink-0" style={{ color }}>
         {rank}
       </span>
-      <SourceLogo source={source} />
+      <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0 bg-[var(--color-amber)]/15 text-[var(--color-amber)]">
+        {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={14} />}
+      </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold truncate">{source}</p>
+        <p className="text-sm font-bold truncate">{name}</p>
         <div className="h-1.5 rounded-full bg-white/[0.06] mt-1.5 overflow-hidden">
           <div
             className="h-full rounded-full"
@@ -85,7 +61,9 @@ function PublicationRow({ rank, source, count, max }: { rank: number; source: st
           />
         </div>
       </div>
-      <span className="mono-num text-sm font-bold text-[var(--color-ink-dim)] shrink-0">{count}</span>
+      <span className="mono-num text-sm font-bold text-[var(--color-ink-dim)] shrink-0">
+        {count} post{count === 1 ? "" : "s"}
+      </span>
     </div>
   );
 }
@@ -170,11 +148,11 @@ function ScoreRow({ rank, entry, isYou }: { rank: number; entry: Profile; isYou:
   );
 }
 
-// Two genuinely-sourced rankings: "Best Publications" counts real bylines from the live news
-// feed, and "Top Credit Scores" is a real cross-user ranking pulled from every signed-in user's
-// synced profile row (see useLeaderboard/useProfileSync).
+// Two genuinely-sourced rankings: "Top Authors" counts real published posts by whoever wrote
+// them (not external news bylines), and "Top Credit Scores" is a real cross-user ranking pulled
+// from every signed-in user's synced profile row (see useLeaderboard/useProfileSync).
 export function LeaderboardPanel({
-  articles,
+  posts,
   profiles,
   score,
   bandColor,
@@ -191,16 +169,26 @@ export function LeaderboardPanel({
   onVotePoll,
   onCreatePoll,
 }: Props) {
-  const publications = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const a of articles) {
-      if (!a.source) continue;
-      counts.set(a.source, (counts.get(a.source) ?? 0) + 1);
-    }
-    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  }, [articles]);
+  const avatarByAuthor = useMemo(() => {
+    const map: Record<string, string | undefined> = {};
+    for (const e of scoreEntries) map[e.userId] = e.avatarUrl;
+    return map;
+  }, [scoreEntries]);
 
-  const maxPublication = publications[0]?.[1] ?? 1;
+  const authors = useMemo(() => {
+    const counts = new Map<string, { name: string; count: number }>();
+    for (const p of posts) {
+      const existing = counts.get(p.authorId);
+      if (existing) existing.count += 1;
+      else counts.set(p.authorId, { name: p.authorName, count: 1 });
+    }
+    return Array.from(counts.entries())
+      .map(([authorId, v]) => ({ authorId, ...v }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [posts]);
+
+  const maxAuthorPosts = authors[0]?.count ?? 1;
 
   return (
     <>
@@ -224,15 +212,15 @@ export function LeaderboardPanel({
           <div className="h-[3px] w-full" style={{ background: "linear-gradient(90deg, var(--color-amber), transparent)" }} />
           <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[var(--color-border)]">
             <Trophy size={16} style={{ color: "var(--color-amber)" }} />
-            <span className="display-bold text-lg tracking-tight">Best Publications</span>
+            <span className="display-bold text-lg tracking-tight">Top Authors</span>
           </div>
-          {publications.length === 0 ? (
+          {authors.length === 0 ? (
             <div className="px-5 py-10 text-center text-sm text-[var(--color-ink-faint)]">
-              No real news sources loaded yet — this fills in as today's market news comes in.
+              No published articles yet — this fills in as staff post to the site.
             </div>
           ) : (
-            publications.map(([source, count], i) => (
-              <PublicationRow key={source} rank={i + 1} source={source} count={count} max={maxPublication} />
+            authors.map((a, i) => (
+              <AuthorRow key={a.authorId} rank={i + 1} name={a.name} avatarUrl={avatarByAuthor[a.authorId]} count={a.count} max={maxAuthorPosts} />
             ))
           )}
         </div>
