@@ -203,6 +203,21 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
       ? new Date(t).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" })
       : new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 
+  // A real date range instead of exposing the raw sample count — "1D · 1,036 samples" is an
+  // implementation detail, not something a viewer of the chart needs to know.
+  const rangeSpan = (() => {
+    if (points.length < 2) return "";
+    const start = points[0].t;
+    const end = points[points.length - 1].t;
+    if (RANGE_CONFIG[range].source === "intraday") {
+      const sameDay = new Date(start).toDateString() === new Date(end).toDateString();
+      return sameDay
+        ? new Date(start).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+        : `${new Date(start).toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${new Date(end).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+    }
+    return `${new Date(start).toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${new Date(end).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
+  })();
+
   const rangeToggle = (
     <div className="flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5">
       {RANGE_ORDER.map((r) => (
@@ -212,12 +227,9 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
             setRange(r);
             setHoverIndex(null);
           }}
-          className="mono-num text-[11px] font-bold px-2.5 py-1 rounded-md transition-all"
-          style={
-            range === r
-              ? { background: color, color: "#03110a", boxShadow: `0 0 14px -2px ${color}` }
-              : { color: "var(--color-ink-faint)" }
-          }
+          className={`mono-num text-[11px] font-bold px-2.5 py-1 rounded-md transition-colors ${
+            range === r ? "bg-white/[0.12] text-[var(--color-ink)]" : "text-[var(--color-ink-faint)] hover:text-[var(--color-ink-dim)]"
+          }`}
         >
           {r}
         </button>
@@ -227,7 +239,7 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
 
   return (
     <div className="board mt-4 overflow-hidden" style={points.length > 0 ? { boxShadow: `0 0 40px -20px ${color}66` } : undefined}>
-      <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, ${bandColor}, ${color})` }} />
+      <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, ${color}, transparent)` }} />
       <div className="flex items-center justify-between px-6 pt-5 gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -243,12 +255,12 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
           </div>
           {points.length > 0 && displayed ? (
             <>
-              <div className="flex items-baseline gap-2.5">
-                <span className="display-bold text-[42px] leading-none tracking-tight text-[var(--color-ink)]">
+              <div className="flex items-baseline gap-2">
+                <span className="display-bold text-[28px] leading-none tracking-tight text-[var(--color-ink)]">
                   {displayed.score.toFixed(2)}
                 </span>
                 {!hovered && (
-                  <span className="mono-num text-[13px] font-bold flex items-center gap-1" style={{ color }}>
+                  <span className="mono-num text-[12px] font-bold flex items-center gap-1" style={{ color }}>
                     {periodDelta >= 0 ? "+" : ""}
                     {periodDelta.toFixed(2)} ({periodDelta >= 0 ? "+" : ""}
                     {periodPct.toFixed(2)}%)
@@ -256,11 +268,11 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
                 )}
               </div>
               <p className="mono-num text-[11px] text-[var(--color-ink-faint)] mt-1">
-                {hovered ? formatHoverLabel(hovered.t) : `${range} · ${points.length.toLocaleString()} samples`}
+                {hovered ? formatHoverLabel(hovered.t) : rangeSpan}
               </p>
             </>
           ) : (
-            <div className="h-[54px]" />
+            <div className="h-[44px]" />
           )}
         </div>
         {rangeToggle}
@@ -305,6 +317,7 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
                   fontWeight={700}
                   fontSize={11}
                   fill="var(--color-ink-dim)"
+                  style={{ fontVariantNumeric: "tabular-nums" }}
                 >
                   {Math.round(t.value)}
                 </text>
@@ -332,10 +345,10 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
                 d={linePath}
                 fill="none"
                 stroke={color}
-                strokeWidth={2.5}
+                strokeWidth={1.75}
                 strokeLinejoin="round"
                 strokeLinecap="round"
-                style={{ filter: `drop-shadow(0 0 6px ${color}aa)` }}
+                style={{ filter: `drop-shadow(0 0 4px ${color}88)` }}
               />
             </g>
             {hovered ? (
@@ -357,6 +370,41 @@ export function ScoreStatsPanel({ history, dailyHistory, bandColor = "var(--colo
                   stroke={color}
                   strokeWidth={2.5}
                 />
+                {(() => {
+                  const boxW = 90;
+                  const boxH = 34;
+                  const cy = Math.max(padT, Math.min(padT + plotH, hovered.y));
+                  const bx = Math.min(Math.max(hovered.x - boxW / 2, padL), padL + plotW - boxW);
+                  const by = Math.max(padT, cy - boxH - 12);
+                  return (
+                    <g pointerEvents="none">
+                      <rect x={bx} y={by} width={boxW} height={boxH} rx={7} fill="rgba(12,12,14,0.94)" stroke="var(--color-border-soft)" strokeWidth={1} />
+                      <text
+                        x={bx + boxW / 2}
+                        y={by + 16}
+                        textAnchor="middle"
+                        fontFamily="var(--font-sans)"
+                        fontWeight={700}
+                        fontSize={13}
+                        fill="#fff"
+                        style={{ fontVariantNumeric: "tabular-nums" }}
+                      >
+                        {hovered.score.toFixed(2)}
+                      </text>
+                      <text
+                        x={bx + boxW / 2}
+                        y={by + 27}
+                        textAnchor="middle"
+                        fontFamily="var(--font-sans)"
+                        fontWeight={600}
+                        fontSize={9}
+                        fill="var(--color-ink-faint)"
+                      >
+                        {formatHoverLabel(hovered.t)}
+                      </text>
+                    </g>
+                  );
+                })()}
               </>
             ) : (
               lastPoint &&
