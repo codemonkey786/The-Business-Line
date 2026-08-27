@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   appendScorePoint,
+  clearScoreHistory,
   loadDailyScoreHistory,
   loadScoreHistory,
   saveDailyScoreHistory,
@@ -49,5 +50,11 @@ export function useScoreHistory(score: number) {
     return () => window.clearInterval(interval);
   }, []);
 
-  return { history, dailyHistory };
+  const reset = () => {
+    clearScoreHistory();
+    setHistory([]);
+    setDailyHistory([]);
+  };
+
+  return { history, dailyHistory, reset };
 }

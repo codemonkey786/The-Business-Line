@@ -68,6 +68,14 @@ export function saveDailyScoreHistory(points: ScorePoint[]) {
   }
 }
 
+// Wipes both resolutions — used on sign-out so the next visitor to this browser (guest or a
+// different account) doesn't see the previous account's score chart before their own history
+// has recorded anything.
+export function clearScoreHistory() {
+  localStorage.removeItem(INTRADAY_KEY);
+  localStorage.removeItem(DAILY_KEY);
+}
+
 // Updates today's running daily point (latest score so far) or appends a new day's point when
 // the calendar day rolls over. Never fabricates a day that hasn't actually happened.
 export function upsertDailyScorePoint(existing: ScorePoint[], next: ScorePoint): ScorePoint[] {

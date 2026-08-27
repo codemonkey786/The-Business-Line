@@ -78,7 +78,7 @@ export default function App() {
     const url = await uploadAvatar(file, user.id);
     await updateAvatar(url);
   }
-  const { state, pick, closeCall, setScoreImpact, toggleWatchlist, syncStatus } = usePortfolio(user?.id);
+  const { state, pick, closeCall, setScoreImpact, toggleWatchlist, syncStatus, reset: resetPortfolio } = usePortfolio(user?.id);
   const { isAdmin, isOwner } = useAdmin(user);
   const { posts, createPost, updatePost, deletePost, approvePost, renameMyPosts } = usePosts(user);
 
@@ -127,7 +127,7 @@ export default function App() {
   }, [openPositionSymbols, activeCategories, state.watchlist]);
   const scoreResult = useMemo(() => computeCreditScore(state, quotes, betas), [state, quotes, betas]);
   const scoreDelta = useScoreDelta(scoreResult.score);
-  const { history: scoreHistory, dailyHistory: dailyScoreHistory } = useScoreHistory(scoreResult.score);
+  const { history: scoreHistory, dailyHistory: dailyScoreHistory, reset: resetScoreHistory } = useScoreHistory(scoreResult.score);
   const mergedScoreHistory = useMemo(
     () => mergeDailyAndIntradayScoreHistory(dailyScoreHistory, scoreHistory),
     [dailyScoreHistory, scoreHistory]
@@ -263,6 +263,16 @@ export default function App() {
     setActiveTab(tab);
     mainRef.current?.scrollTo({ top: 0 });
     if (tab === "leaderboard") leaderboard.refresh();
+  }
+
+  // Signing out has to actually leave you as a fresh guest, not just drop the Supabase session
+  // while this browser's local cache keeps showing the account's calls and score chart —
+  // otherwise the next person on this device (or you, next visit) would see stale data instead
+  // of the real, unauthenticated 600 starting point.
+  async function handleSignOut() {
+    await signOut();
+    resetPortfolio();
+    resetScoreHistory();
   }
 
   function openArticle(article: NewsArticle) {
@@ -433,7 +443,7 @@ export default function App() {
                 }}
                 isOwner={isOwner}
                 onOpenAdminManager={() => setAdminManagerOpen(true)}
-                onSignOut={signOut}
+                onSignOut={handleSignOut}
               />
             </Suspense>
           )}
