@@ -22,6 +22,7 @@ interface Props {
   myPollVote: number | null;
   onVotePoll: (optionIndex: number) => void;
   onCreatePoll: (question: string, options: string[]) => Promise<void>;
+  onViewProfile?: (entry: Profile) => void;
 }
 
 const RANK_COLORS = ["var(--color-amber)", "#c9c9d4", "#d2895a", "var(--color-ink-faint)"];
@@ -96,17 +97,29 @@ function ScoreRankBadge({ rank }: { rank: number }) {
   return <span className="mono-num text-sm font-bold w-7 text-center shrink-0 text-[var(--color-ink-faint)]">{rank}</span>;
 }
 
-function ScoreRow({ rank, entry, isYou }: { rank: number; entry: Profile; isYou: boolean }) {
+function ScoreRow({
+  rank,
+  entry,
+  isYou,
+  onClick,
+}: {
+  rank: number;
+  entry: Profile;
+  isYou: boolean;
+  onClick?: () => void;
+}) {
   const entryScore = entry.score ?? 0;
   const entryBand = bandForScore(entryScore);
   const entryBandColor = bandColorVar(entryBand);
   const name = entry.displayName || entry.email;
   const leader = rank === 1;
   return (
-    <div
-      className={`flex items-center gap-3 px-5 py-3.5 border-b border-[var(--color-border-soft)] last:border-0 transition-colors ${
-        isYou ? "bg-[var(--color-amber)]/[0.06]" : leader ? "bg-white/[0.025]" : ""
-      }`}
+    <button
+      onClick={onClick}
+      disabled={!onClick}
+      className={`w-full flex items-center gap-3 px-5 py-3.5 border-b border-[var(--color-border-soft)] last:border-0 transition-colors text-left ${
+        onClick ? "hover:bg-white/[0.03] cursor-pointer" : "cursor-default"
+      } ${isYou ? "bg-[var(--color-amber)]/[0.06]" : leader ? "bg-white/[0.025]" : ""}`}
     >
       <ScoreRankBadge rank={rank} />
       <div
@@ -144,7 +157,7 @@ function ScoreRow({ rank, entry, isYou }: { rank: number; entry: Profile; isYou:
           {entryScore.toFixed(0)}
         </span>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -168,6 +181,7 @@ export function LeaderboardPanel({
   myPollVote,
   onVotePoll,
   onCreatePoll,
+  onViewProfile,
 }: Props) {
   const avatarByAuthor = useMemo(() => {
     const map: Record<string, string | undefined> = {};
@@ -244,7 +258,15 @@ export function LeaderboardPanel({
               entry={{ userId: userId ?? "you", email: userEmail ?? "You", isAdmin: false, avatarUrl, score }}
             />
           ) : (
-            scoreEntries.map((entry, i) => <ScoreRow key={entry.userId} rank={i + 1} entry={entry} isYou={entry.userId === userId} />)
+            scoreEntries.map((entry, i) => (
+              <ScoreRow
+                key={entry.userId}
+                rank={i + 1}
+                entry={entry}
+                isYou={entry.userId === userId}
+                onClick={onViewProfile ? () => onViewProfile(entry) : undefined}
+              />
+            ))
           )}
         </div>
       </div>

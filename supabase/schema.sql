@@ -248,3 +248,11 @@ create policy "Users can change their own vote"
   to authenticated
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- Run this once — lets clicking a leaderboard entry open that person's real positions (a
+-- read-only public profile view). Additive alongside the existing "own row" select policy
+-- above, so it doesn't change who can insert/update a portfolio, only who can read one.
+create policy "Anyone signed in can read any portfolio"
+  on public.portfolios for select
+  to authenticated
+  using (true);

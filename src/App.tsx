@@ -38,11 +38,12 @@ import { hasSupabaseConfig } from "./lib/supabase";
 import { mergeFullAndLiveHistory } from "./lib/fullHistoryStorage";
 import { CATEGORY_LIBRARY, DEFAULT_CATEGORY_KEYS, symbolsForCategories } from "./lib/categories";
 import { filterNewsByStaffActivity } from "./lib/newsFiltering";
-import type { CallDirection, NewsArticle, Post } from "./lib/types";
+import type { CallDirection, NewsArticle, Post, Profile } from "./lib/types";
 
 // Split out of the main bundle: none of these are needed to paint the default Overview tab, so
 // there's no reason to make every visitor download and parse them before first render.
 const LeaderboardPanel = lazy(() => import("./components/LeaderboardPanel").then((m) => ({ default: m.LeaderboardPanel })));
+const PublicProfileView = lazy(() => import("./components/PublicProfileView").then((m) => ({ default: m.PublicProfileView })));
 const ProfilePage = lazy(() => import("./components/ProfilePage").then((m) => ({ default: m.ProfilePage })));
 const SettingsPage = lazy(() => import("./components/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 const PostComposer = lazy(() => import("./components/PostComposer").then((m) => ({ default: m.PostComposer })));
@@ -94,6 +95,7 @@ export default function App() {
   const [adminManagerOpen, setAdminManagerOpen] = useState(false);
   const [readingArticle, setReadingArticle] = useState<NewsArticle | null>(null);
   const [readingPost, setReadingPost] = useState<Post | null>(null);
+  const [viewingProfile, setViewingProfile] = useState<Profile | null>(null);
   const activeCategoryKeys = DEFAULT_CATEGORY_KEYS;
   const activeCategories = useMemo(
     () => CATEGORY_LIBRARY.filter((c) => activeCategoryKeys.includes(c.key)),
@@ -260,9 +262,20 @@ export default function App() {
   function handleTabChange(tab: NavTab) {
     setReadingArticle(null);
     setReadingPost(null);
+    setViewingProfile(null);
     setActiveTab(tab);
     mainRef.current?.scrollTo({ top: 0 });
     if (tab === "leaderboard") leaderboard.refresh();
+  }
+
+  // Clicking your own leaderboard row just takes you to the real, interactive Profile tab
+  // instead of the read-only view meant for looking at someone else.
+  function openUserProfile(entry: Profile) {
+    if (entry.userId === user?.id) {
+      handleTabChange("profile");
+      return;
+    }
+    requireAuth(() => setViewingProfile(entry));
   }
 
   // Signing out has to actually leave you as a fresh guest, not just drop the Supabase session
@@ -313,7 +326,20 @@ export default function App() {
         {!hasApiKey() && <ApiKeyNotice />}
 
         <main ref={mainRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-6">
-          {readingArticle ? (
+          {viewingProfile ? (
+            <Suspense fallback={TAB_FALLBACK}>
+              <PublicProfileView
+                profile={viewingProfile}
+                posts={publishedPosts}
+                quotes={quotes}
+                profiles={profiles}
+                betas={betas}
+                priceHistory={history}
+                onBack={() => setViewingProfile(null)}
+                onOpenPost={openPost}
+              />
+            </Suspense>
+          ) : readingArticle ? (
             <ArticleReader
               article={readingArticle}
               feedback={articleFeedback?.[readingArticle.id]}
@@ -395,6 +421,7 @@ export default function App() {
                 myPollVote={myPollVote}
                 onVotePoll={votePoll}
                 onCreatePoll={createPoll}
+                onViewProfile={openUserProfile}
               />
             </Suspense>
           ) : activeTab === "profile" ? (
