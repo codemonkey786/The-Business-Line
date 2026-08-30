@@ -106,7 +106,7 @@ export function SymbolDetailCard({
             }`}
           >
             {activeCall.direction === "UP" ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
-            Backing {activeCall.direction === "UP" ? "Up" : "Down"} · Bought ${activeCall.entryPrice.toFixed(2)}
+            Backing {activeCall.direction === "UP" ? "Up" : "Down"} · Bought at ${activeCall.entryPrice.toFixed(2)}
           </div>
 
           {confirmingDivest ? (
