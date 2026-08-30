@@ -2,7 +2,8 @@ const INTRADAY_KEY = "creditfolio.scoreHistory.v3";
 const DAILY_KEY = "creditfolio.dailyScoreHistory.v1";
 
 const INTRADAY_MAX_AGE_MS = 24 * 60 * 60 * 1000; // dense resolution: a real rolling day of snapshots
-const INTRADAY_MAX_POINTS = 5000; // safety valve against runaway growth
+const INTRADAY_MAX_POINTS = 20000; // safety valve against runaway growth — high enough that a
+// genuinely active day of tick-driven recording doesn't get trimmed before the 24h age cutoff does
 const DAILY_MAX_POINTS = 800; // >2 years of daily closes — plenty, tiny storage footprint
 
 export interface ScorePoint {
