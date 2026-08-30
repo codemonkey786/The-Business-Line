@@ -129,7 +129,18 @@ export default function App() {
   }, [openPositionSymbols, activeCategories, state.watchlist]);
   const scoreResult = useMemo(() => computeCreditScore(state, quotes, betas), [state, quotes, betas]);
   const scoreDelta = useScoreDelta(scoreResult.score);
-  const { history: scoreHistory, dailyHistory: dailyScoreHistory, reset: resetScoreHistory } = useScoreHistory(scoreResult.score);
+  // Right after a page load, an open call whose symbol hasn't gotten its first live quote yet
+  // computes as a bare, contribution-free 600 — real for a moment, but not a value worth
+  // recording as history (see useScoreHistory's own comment for what this prevents).
+  const scoreDataReady = useMemo(
+    () => state.calls.every((c) => Boolean(c.closedAt) || Boolean(quotes[c.symbol])),
+    [state.calls, quotes]
+  );
+  const {
+    history: scoreHistory,
+    dailyHistory: dailyScoreHistory,
+    reset: resetScoreHistory,
+  } = useScoreHistory(scoreResult.score, scoreDataReady);
   const mergedScoreHistory = useMemo(
     () => mergeDailyAndIntradayScoreHistory(dailyScoreHistory, scoreHistory),
     [dailyScoreHistory, scoreHistory]

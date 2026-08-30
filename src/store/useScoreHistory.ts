@@ -21,7 +21,12 @@ const MIN_CHANGE_TO_RECORD = 0.005; // filters float noise, not real movement
 // real price chart it's derived from, instead of flattening a fast real move into one straight
 // segment between 20-second samples. Kept at two resolutions, same as price history: a dense
 // rolling 24h window, and one real point per calendar day for the long ranges.
-export function useScoreHistory(score: number) {
+//
+// `ready` must stay false until every open call's symbol actually has a live quote — right
+// after a page load, an open call with no quote yet computes as a bare, contribution-free 600,
+// which is not a real score and must never get written into history (it would show up as a
+// fake dip-to-600-and-back on every single reload).
+export function useScoreHistory(score: number, ready: boolean = true) {
   const [history, setHistory] = useState<ScorePoint[]>(() => loadScoreHistory());
   const [dailyHistory, setDailyHistory] = useState<ScorePoint[]>(() => loadDailyScoreHistory());
   const scoreRef = useRef(score);
@@ -30,7 +35,7 @@ export function useScoreHistory(score: number) {
   const persistDailyTimer = useRef<number | null>(null);
 
   const record = useCallback(() => {
-    if (!Number.isFinite(scoreRef.current)) return;
+    if (!ready || !Number.isFinite(scoreRef.current)) return;
     lastRecordedScore.current = scoreRef.current;
     const point = { t: Date.now(), score: scoreRef.current };
     setHistory((prev) => {
@@ -45,20 +50,21 @@ export function useScoreHistory(score: number) {
       persistDailyTimer.current = window.setTimeout(() => saveDailyScoreHistory(next), PERSIST_DEBOUNCE_MS);
       return next;
     });
-  }, []);
+  }, [ready]);
 
   useEffect(() => {
     scoreRef.current = score;
-    if (lastRecordedScore.current !== null && Math.abs(score - lastRecordedScore.current) > MIN_CHANGE_TO_RECORD) {
+    if (ready && lastRecordedScore.current !== null && Math.abs(score - lastRecordedScore.current) > MIN_CHANGE_TO_RECORD) {
       record();
     }
-  }, [score, record]);
+  }, [score, ready, record]);
 
   useEffect(() => {
+    if (!ready) return;
     record();
     const interval = window.setInterval(record, SAMPLE_INTERVAL_MS);
     return () => window.clearInterval(interval);
-  }, [record]);
+  }, [ready, record]);
 
   const reset = () => {
     clearScoreHistory();
